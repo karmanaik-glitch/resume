@@ -54,13 +54,13 @@ export default function DataMolecule() {
 
     // 1. Capture the browser's exact scroll position
     const scrollY = window.scrollY;
-    const maxScroll = document.body.scrollHeight - window.innerHeight;
+    // Calculate max scroll safely, defaulting to 1 to avoid division by zero
+    const maxScroll = Math.max(document.body.scrollHeight - window.innerHeight, 1);
     
-    // Prevent divide by zero on initial load
-    const scrollPercent = maxScroll > 0 ? scrollY / maxScroll : 0;
+    const scrollPercent = scrollY / maxScroll;
 
     // 2. LERP (Linear Interpolation) 
-    // This makes the 3D movement buttery smooth, even if the user scrolls using a clunky mouse wheel.
+    // This makes the 3D movement buttery smooth
     currentScroll.current = THREE.MathUtils.lerp(currentScroll.current, scrollPercent, delta * 4);
 
     // 3. Scroll Animation Mechanics:
@@ -85,8 +85,9 @@ export default function DataMolecule() {
       <group ref={groupRef}>
         <points>
           <bufferGeometry>
-            <bufferAttribute attach="attributes-position" count={particleCount} array={positions} itemSize={3} />
-            <bufferAttribute attach="attributes-color" count={particleCount} array={colors} itemSize={3} />
+            {/* FIXED TYPESCRIPT ARGS FOR VERCEL */}
+            <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+            <bufferAttribute attach="attributes-color" args={[colors, 3]} />
           </bufferGeometry>
           <pointsMaterial 
             size={0.06} 
