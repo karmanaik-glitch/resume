@@ -3,15 +3,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, Variants, useScroll, useTransform, MotionValue } from 'framer-motion';
 
-// ══════════════ 1. ANIMATION VARIANTS (STRICT TYPESCRIPT) ══════════════
+// ══════════════ 1. ANIMATION VARIANTS ══════════════
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
 };
 
 // ══════════════ 2. MATRIX ASSEMBLY COMPONENTS ══════════════
-
-// A single letter that transforms from chaos to perfect order based on scroll
 const AnimatedLetter = ({ char, progress, randomData }: { char: string; progress: MotionValue<number>; randomData: any }) => {
   const x = useTransform(progress, [0, 1], [randomData.x, 0]);
   const y = useTransform(progress, [0, 1], [randomData.y, 0]);
@@ -30,7 +28,6 @@ const AnimatedLetter = ({ char, progress, randomData }: { char: string; progress
   );
 };
 
-// The Hero Section that controls the scroll math
 const MatrixHero = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -56,7 +53,7 @@ const MatrixHero = () => {
 
   return (
     <div ref={containerRef} className="h-[200vh] relative w-full bg-[#03040A]">
-      <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden perspective-[1000px] px-6">
+      <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden px-6 perspective-[1000px]">
         
         <div className="flex items-center gap-3 mb-8">
           <motion.div style={{ opacity: scrollYProgress }} className="w-8 h-px bg-[#C8A96E]" />
@@ -114,20 +111,22 @@ export default function Home() {
   ];
 
   return (
-    <main className="bg-[#03040A] text-[#E8EEF7] min-h-screen font-sans overflow-x-hidden selection:bg-[#00D4FF] selection:text-black">
+    // Removed overflow-x-hidden here to fix the sticky scroll bug
+    <main className="bg-[#03040A] text-[#E8EEF7] min-h-screen font-sans selection:bg-[#00D4FF] selection:text-black">
       
       {/* GLOBAL NOISE & SCROLLBAR */}
       <style dangerouslySetInnerHTML={{__html: `
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #03040A; }
         ::-webkit-scrollbar-thumb { background: #8C7040; }
+        html, body { overflow-x: hidden; } /* Applied safely to body instead of main */
         .noise-overlay { position: fixed; inset: 0; z-index: 9997; pointer-events: none; opacity: 0.02; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E"); }
       `}} />
       <div className="noise-overlay" />
 
       {/* CUSTOM CURSOR */}
-      <motion.div className="fixed top-0 left-0 w-1.5 h-1.5 bg-[#00D4FF] rounded-full pointer-events-none z-[9999] mix-blend-screen" animate={{ x: mousePosition.x - 3, y: mousePosition.y - 3 }} transition={{ type: 'tween', ease: 'backOut', duration: 0.1 }} />
-      <motion.div className="fixed top-0 left-0 border rounded-full pointer-events-none z-[9998] mix-blend-screen flex items-center justify-center" animate={{ x: mousePosition.x - (isHovering ? 28 : 18), y: mousePosition.y - (isHovering ? 28 : 18), width: isHovering ? 56 : 36, height: isHovering ? 56 : 36, borderColor: isHovering ? 'rgba(200,169,110,0.6)' : 'rgba(0,212,255,0.4)', backgroundColor: isHovering ? 'rgba(200,169,110,0.04)' : 'transparent' }} transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }} />
+      <motion.div className="fixed top-0 left-0 w-1.5 h-1.5 bg-[#00D4FF] rounded-full pointer-events-none z-[9999] mix-blend-screen hidden md:block" animate={{ x: mousePosition.x - 3, y: mousePosition.y - 3 }} transition={{ type: 'tween', ease: 'backOut', duration: 0.1 }} />
+      <motion.div className="fixed top-0 left-0 border rounded-full pointer-events-none z-[9998] mix-blend-screen hidden md:flex items-center justify-center" animate={{ x: mousePosition.x - (isHovering ? 28 : 18), y: mousePosition.y - (isHovering ? 28 : 18), width: isHovering ? 56 : 36, height: isHovering ? 56 : 36, borderColor: isHovering ? 'rgba(200,169,110,0.6)' : 'rgba(0,212,255,0.4)', backgroundColor: isHovering ? 'rgba(200,169,110,0.04)' : 'transparent' }} transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }} />
 
       {/* NAVIGATION */}
       <nav className="fixed top-7 right-9 z-[200] flex items-center gap-1 p-1.5 border border-white/10 rounded-full bg-[#060810]/75 backdrop-blur-md">
@@ -136,11 +135,11 @@ export default function Home() {
         ))}
       </nav>
 
-      {/* 1. MATRIX HERO SECTION (Takes up 200vh for scrolling) */}
+      {/* 1. MATRIX HERO SECTION */}
       <MatrixHero />
 
       {/* 2. SKILLS BENTO GRID */}
-      <section id="skills" className="px-6 md:px-[8vw] py-[120px] bg-[#060810] relative z-10">
+      <section id="skills" className="px-6 md:px-[8vw] py-[120px] bg-[#060810] relative z-10 w-full overflow-hidden">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">01</span>
           <h2 className="font-serif text-4xl md:text-[66px] font-light tracking-tight text-[#E8EEF7] leading-none col-start-1 row-start-1">Competencies</h2>
@@ -181,7 +180,7 @@ export default function Home() {
       </section>
 
       {/* 3. EXPERIENCE TABS */}
-      <section id="experience" className="px-6 md:px-[8vw] py-[120px] bg-[#0B0D18]">
+      <section id="experience" className="px-6 md:px-[8vw] py-[120px] bg-[#0B0D18] w-full overflow-hidden">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">02</span>
           <h2 className="font-serif text-4xl md:text-[66px] font-light tracking-tight text-[#E8EEF7] leading-none col-start-1 row-start-1">Experience</h2>
@@ -225,7 +224,7 @@ export default function Home() {
       </section>
 
       {/* 4. PROJECTS GRID */}
-      <section id="projects" className="px-6 md:px-[8vw] py-[120px] bg-[#03040A]">
+      <section id="projects" className="px-6 md:px-[8vw] py-[120px] bg-[#03040A] w-full overflow-hidden">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">03</span>
           <h2 className="font-serif text-4xl md:text-[66px] font-light tracking-tight text-[#E8EEF7] leading-none col-start-1 row-start-1">Projects</h2>
@@ -240,10 +239,22 @@ export default function Home() {
           ].map((proj, idx) => (
             <motion.a key={idx} href="#" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group block relative bg-[#161927] border border-white/5 rounded p-8 hover:border-white/10 hover:-translate-y-2 transition-all duration-500">
               <div className="font-serif text-[80px] font-light leading-none mb-5 text-white/5 transition-opacity group-hover:text-white/10">{proj.num}</div>
-              <div className={`font-mono text-[9px] tracking-[0.12em] uppercase px-2.5 py-1 rounded-sm border inline-block mb-5 text-[${proj.color}] border-[${proj.color}]/20 bg-[${proj.color}]/5`}>{proj.badge}</div>
+              
+              {/* FIXED TAILWIND DYNAMIC COLOR BUG BY USING INLINE STYLES FOR THE HEX COLORS */}
+              <div 
+                className="font-mono text-[9px] tracking-[0.12em] uppercase px-2.5 py-1 rounded-sm border inline-block mb-5"
+                style={{ color: proj.color, borderColor: `${proj.color}40`, backgroundColor: `${proj.color}0D` }}
+              >
+                {proj.badge}
+              </div>
+              
               <h3 className="font-serif text-[28px] text-[#E8EEF7] leading-[1.1] mb-3.5">{proj.title}</h3>
               <div className="flex flex-wrap gap-1.5 mb-7">
                 {proj.tags.map(tag => <span key={tag} className="font-mono text-[9px] tracking-[0.05em] text-white/20 border border-white/5 px-2 py-1 rounded-sm">{tag}</span>)}
+              </div>
+              <div className="flex items-center justify-between pt-5 border-t border-white/5">
+                <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-white/50 group-hover:text-[#00D4FF] transition-colors">View Live</span>
+                <span className="text-white/20 group-hover:text-[#00D4FF] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all">↗</span>
               </div>
             </motion.a>
           ))}
