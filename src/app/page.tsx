@@ -1,69 +1,66 @@
+'use client';
+
 import React from 'react';
-import MatrixSlide from '@/components/MatrixSlide';
-
-export default function Home() {
+import { motion } from 'framer-motion';
+import { Canvas } from '@react-three/fiber';
+import DataMolecule from '../components/DataMolecule';
+import BentoGrid from '../components/BentoGrid';
+import ProjectsGrid from '../components/ProjectsGrid';
+import EducationTimeline from '../components/EducationTimeline';
+import ContactFooter from '../components/ContactFooter';
+export default function PremiumResume() {
   return (
-    // The main container forces a dark background and prevents horizontal scrolling issues
-    <main className="bg-[#0a0a0a] text-white overflow-x-hidden selection:bg-[#00D4FF] selection:text-black">
+    <main className="relative min-h-screen w-full bg-void font-sans text-ice">
       
-      {/* 1. HERO SECTION: The Framer Motion Matrix Assembly */}
-      <MatrixSlide />
+      {/* 3D CANVAS LAYER */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-clinicalCyan/5 to-void z-0"></div>
+        <div className="absolute top-0 right-0 w-full md:w-1/2 h-full z-10">
+          <Canvas camera={{ position: [0, 0, 8], fov: 45 }} gl={{ alpha: true, antialias: true }} style={{ background: 'transparent' }}>
+            <ambientLight intensity={0.1} />
+            <DataMolecule />
+          </Canvas>
+        </div>
+      </div>
 
-      {/* 2. ABOUT SECTION */}
-      <section className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-24 max-w-5xl mx-auto">
-        <h3 className="text-xs md:text-sm tracking-[0.3em] text-[#00D4FF] uppercase mb-8">
-          The Intersection
-        </h3>
-        <p className="text-2xl md:text-4xl text-gray-400 font-light leading-relaxed text-center">
-          I bridge the gap between <span className="text-white font-medium">clinical pharmacy</span> and <span className="text-white font-medium">data engineering</span>. 
-          My focus is on architecting scalable pipelines that turn complex clinical trial data into precise, actionable intelligence.
-        </p>
-      </section>
-
-      {/* 3. EXPERIENCE SECTION */}
-      <section className="min-h-screen px-6 py-24 max-w-4xl mx-auto">
-        <h3 className="text-xs md:text-sm tracking-[0.3em] text-[#C8A96E] uppercase mb-12 border-b border-gray-800 pb-4">
-          Professional Experience
-        </h3>
+      {/* FOREGROUND CONTENT LAYER */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 py-24 pointer-events-none">
         
-        <div className="space-y-16">
-          {/* Experience Block 1 */}
-          <div className="relative border-l border-gray-800 pl-8 hover:border-[#00D4FF] transition-colors duration-500">
-            {/* Tiny dot on the timeline */}
-            <div className="absolute w-3 h-3 bg-[#0a0a0a] border border-[#00D4FF] rounded-full -left-[6.5px] top-2"></div>
+        {/* HERO SECTION */}
+        <section className="min-h-[80vh] flex flex-col justify-center w-full md:w-1/2 pointer-events-auto">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="h-px w-8 bg-clinicalGold"></div>
+              <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-clinicalGold">Pharm.D · CDM · Healthcare AI</span>
+            </div>
             
-            <h4 className="text-2xl text-white font-medium">Clinical Data Manager</h4>
-            <p className="text-[#00D4FF] mt-2 text-sm tracking-wide">YOUR COMPANY NAME <span className="text-gray-600 mx-2">|</span> 2024 - Present</p>
-            <p className="text-gray-400 mt-5 leading-relaxed max-w-2xl">
-              Engineered and maintained robust data pipelines for Phase II/III clinical trials. Reconciled complex datasets to ensure pristine data integrity and regulatory compliance.
-            </p>
-          </div>
-
-          {/* Experience Block 2 */}
-          <div className="relative border-l border-gray-800 pl-8 hover:border-[#C8A96E] transition-colors duration-500">
-            <div className="absolute w-3 h-3 bg-[#0a0a0a] border border-[#C8A96E] rounded-full -left-[6.5px] top-2"></div>
+            <h1 className="text-6xl md:text-8xl font-serif font-light tracking-tight mb-4">
+              Karma <span className="italic text-transparent bg-clip-text bg-gradient-to-br from-clinicalCyan to-blue-400">Naik</span>
+            </h1>
             
-            <h4 className="text-2xl text-white font-medium">Data Analyst / Researcher</h4>
-            <p className="text-[#C8A96E] mt-2 text-sm tracking-wide">PREVIOUS COMPANY <span className="text-gray-600 mx-2">|</span> 2021 - 2024</p>
-            <p className="text-gray-400 mt-5 leading-relaxed max-w-2xl">
-              Developed custom analytics dashboards and automated reporting workflows, reducing manual data processing time by 40%.
-            </p>
-          </div>
-        </div>
-      </section>
+            <p className="font-mono text-xs tracking-widest uppercase text-iceDim mb-8">Clinical Data Management & Healthcare Intelligence</p>
+            <p className="max-w-xl text-iceDim leading-relaxed text-sm md:text-base mb-10">Bridging pharmaceutical expertise with data architecture — transforming patient-level clinical observations into rigorous, trial-ready insights.</p>
 
-      {/* 4. FOOTER */}
-      <footer className="border-t border-gray-900 py-12 mt-24">
-        <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Your Name. All rights reserved.</p>
-          <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="hover:text-[#00D4FF] transition-colors">LinkedIn</a>
-            <a href="#" className="hover:text-[#00D4FF] transition-colors">GitHub</a>
-            <a href="mailto:your.email@example.com" className="hover:text-[#00D4FF] transition-colors">Email</a>
-          </div>
-        </div>
-      </footer>
+            <div className="flex gap-6">
+              <button onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 bg-clinicalCyan text-void font-mono text-xs tracking-widest uppercase hover:bg-white transition-colors duration-300">
+                View Projects
+              </button>
+              <button onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 border border-white/10 text-ice font-mono text-xs tracking-widest uppercase hover:border-white/30 transition-colors duration-300">
+                Get in Touch
+              </button>
+            </div>
+          </motion.div>
+        </section>
 
+        {/* COMPONENT STACK */}
+        <div className="pointer-events-auto mt-24 flex flex-col gap-12">
+          <BentoGrid />
+          <ProjectsGrid />
+          <EducationTimeline />
+          <ContactFooter />
+        </div>
+
+      </div>
     </main>
   );
 }
