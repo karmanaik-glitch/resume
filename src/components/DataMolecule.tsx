@@ -6,113 +6,98 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 export default function DataMolecule() {
-  const pointsRef = useRef<THREE.Points>(null);
-  const linesRef = useRef<THREE.LineSegments>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
-  const particleCount = 150;
-  const maxDistance = 2.5;
-
-  // Initialize positions and velocities
-  const { particlesData, positions } = useMemo(() => {
+  // Generate 2,500 data points to form a massive double helix
+  const particleCount = 2500;
+  
+  const { positions, colors } = useMemo(() => {
     const positions = new Float32Array(particleCount * 3);
-    const particlesData = [];
+    const colors = new Float32Array(particleCount * 3);
     
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    const colorCyan = new THREE.Color('#00D4FF'); // Clinical Cyan
+    const colorGold = new THREE.Color('#C8A96E'); // Clinical Gold
 
-      particlesData.push({
-        velocity: new THREE.Vector3(
-          (Math.random() - 0.5) * 0.02,
-          (Math.random() - 0.5) * 0.02,
-          (Math.random() - 0.5) * 0.02
-        ),
-        numConnections: 0,
-      });
+    for (let i = 0; i < particleCount; i++) {
+      const t = i / particleCount;
+      const angle = t * Math.PI * 40; // Number of twists in the helix
+      
+      // Add random noise to make it look like a cloud of data, not a perfect solid line
+      const radius = 2.5 + (Math.random() - 0.5) * 0.8;
+      const height = (t - 0.5) * 40; // Total length of the tunnel
+
+      // Strand 1 or Strand 2 (offset by 180 degrees)
+      const strandOffset = i % 2 === 0 ? 0 : Math.PI;
+      
+      const x = Math.cos(angle + strandOffset) * radius + (Math.random() - 0.5) * 0.5;
+      const z = Math.sin(angle + strandOffset) * radius + (Math.random() - 0.5) * 0.5;
+      const y = height;
+
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
+
+      // Gradient color mapping: Starts Cyan at the top, blends to Gold at the bottom
+      const mixedColor = colorCyan.clone().lerp(colorGold, t);
+      colors[i * 3] = mixedColor.r;
+      colors[i * 3 + 1] = mixedColor.g;
+      colors[i * 3 + 2] = mixedColor.b;
     }
-    return { particlesData, positions };
+    return { positions, colors };
   }, []);
 
-  // Initialize line geometry buffer
-  const linePositions = useMemo(() => new Float32Array(particleCount * particleCount * 3), []);
+  // We use this ref to smoothly interpolate the scroll position
+  const currentScroll = useRef(0);
 
-  useFrame(() => {
-    if (!pointsRef.current || !linesRef.current) return;
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
 
-    let vertexpos = 0;
-    let numConnected = 0;
-
-    const pointPositions = pointsRef.current.geometry.attributes.position.array as Float32Array;
-
-    // Reset connections
-    for (let i = 0; i < particleCount; i++) particlesData[i].numConnections = 0;
-
-    for (let i = 0; i < particleCount; i++) {
-      // Update positions based on velocity
-      pointPositions[i * 3] += particlesData[i].velocity.x;
-      pointPositions[i * 3 + 1] += particlesData[i].velocity.y;
-      pointPositions[i * 3 + 2] += particlesData[i].velocity.z;
-
-      // Bounce off invisible boundaries
-      if (Math.abs(pointPositions[i * 3]) > 5) particlesData[i].velocity.x *= -1;
-      if (Math.abs(pointPositions[i * 3 + 1]) > 5) particlesData[i].velocity.y *= -1;
-      if (Math.abs(pointPositions[i * 3 + 2]) > 5) particlesData[i].velocity.z *= -1;
-
-      // Check distance against other particles to draw lines
-      for (let j = i + 1; j < particleCount; j++) {
-        const dx = pointPositions[i * 3] - pointPositions[j * 3];
-        const dy = pointPositions[i * 3 + 1] - pointPositions[j * 3 + 1];
-        const dz = pointPositions[i * 3 + 2] - pointPositions[j * 3 + 2];
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-        if (dist < maxDistance) {
-          particlesData[i].numConnections++;
-          particlesData[j].numConnections++;
-
-          linePositions[vertexpos++] = pointPositions[i * 3];
-          linePositions[vertexpos++] = pointPositions[i * 3 + 1];
-          linePositions[vertexpos++] = pointPositions[i * 3 + 2];
-
-          linePositions[vertexpos++] = pointPositions[j * 3];
-          linePositions[vertexpos++] = pointPositions[j * 3 + 1];
-          linePositions[vertexpos++] = pointPositions[j * 3 + 2];
-          numConnected++;
-        }
-      }
-    }
-
-    // Flag buffers for WebGL update
-    pointsRef.current.geometry.attributes.position.needsUpdate = true;
+    // 1. Capture the browser's exact scroll position
+    const scrollY = window.scrollY;
+    const maxScroll = document.body.scrollHeight - window.innerHeight;
     
-    linesRef.current.geometry.setDrawRange(0, numConnected * 2);
-    linesRef.current.geometry.attributes.position.needsUpdate = true;
+    // Prevent divide by zero on initial load
+    const scrollPercent = maxScroll > 0 ? scrollY / maxScroll : 0;
+
+    // 2. LERP (Linear Interpolation) 
+    // This makes the 3D movement buttery smooth, even if the user scrolls using a clunky mouse wheel.
+    currentScroll.current = THREE.MathUtils.lerp(currentScroll.current, scrollPercent, delta * 4);
+
+    // 3. Scroll Animation Mechanics:
+    // Move the entire helix DOWN as the user scrolls, creating a "diving" effect
+    groupRef.current.position.y = currentScroll.current * 20;
     
-    // Slowly rotate the entire network
-    pointsRef.current.rotation.y += 0.002;
-    linesRef.current.rotation.y += 0.002;
+    // Furiously twist the helix based on scroll depth
+    groupRef.current.rotation.y = currentScroll.current * Math.PI * 3;
+
+    // Add a very slow, constant ambient rotation so it feels alive even when not scrolling
+    groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.2 + 0.5;
   });
 
   return (
     <>
+      {/* High-end post-processing glow */}
       <EffectComposer>
-        <Bloom luminanceThreshold={0.1} mipmapBlur intensity={1.5} />
+        <Bloom luminanceThreshold={0.15} mipmapBlur intensity={1.8} />
       </EffectComposer>
 
-      <group>
-        <points ref={pointsRef}>
+      {/* The main helix group */}
+      <group ref={groupRef}>
+        <points>
           <bufferGeometry>
             <bufferAttribute attach="attributes-position" count={particleCount} array={positions} itemSize={3} />
+            <bufferAttribute attach="attributes-color" count={particleCount} array={colors} itemSize={3} />
           </bufferGeometry>
-          <pointsMaterial size={0.08} color="#00D4FF" transparent opacity={0.8} />
+          <pointsMaterial 
+            size={0.06} 
+            vertexColors={true} 
+            transparent={true} 
+            opacity={0.8}
+            sizeAttenuation={true} 
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
         </points>
-
-        <lineSegments ref={linesRef}>
-          <bufferGeometry>
-            <bufferAttribute attach="attributes-position" count={linePositions.length / 3} array={linePositions} itemSize={3} />
-          </bufferGeometry>
-          <lineBasicMaterial color="#00D4FF" transparent opacity={0.15} blending={THREE.AdditiveBlending} />
-        </lineSegments>
       </group>
     </>
   );
