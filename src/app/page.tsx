@@ -14,11 +14,11 @@ const staggerContainer: Variants = {
   visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 
-// ══════════════ 2. MOVING BACKGROUND GRADIENT ══════════════
+// ══════════════ 2. GLOBAL MOVING BACKGROUND GRADIENT ══════════════
 const MovingGradient = () => {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      {/* Cyan Blob */}
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+      {/* Cyan Blob - Top Right */}
       <motion.div
         animate={{
           x: [0, 50, 0, -50, 0],
@@ -26,11 +26,11 @@ const MovingGradient = () => {
           scale: [1, 1.1, 0.9, 1],
         }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-[20%] right-[10%] w-[40vw] h-[40vw] rounded-full bg-[#00D4FF] opacity-[0.07]"
+        className="absolute -top-[10%] right-[5%] w-[45vw] h-[45vw] rounded-full bg-[#00D4FF] opacity-[0.06]"
         style={{ filter: 'blur(120px)' }}
       />
       
-      {/* Gold Blob */}
+      {/* Gold Blob - Middle Left */}
       <motion.div
         animate={{
           x: [0, -60, 0, 40, 0],
@@ -38,8 +38,20 @@ const MovingGradient = () => {
           scale: [1, 1.2, 0.8, 1],
         }}
         transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[40%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-[#C8A96E] opacity-[0.05]"
+        className="absolute top-[40%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-[#C8A96E] opacity-[0.04]"
         style={{ filter: 'blur(140px)' }}
+      />
+
+      {/* Deep Blue Blob - Bottom Right */}
+      <motion.div
+        animate={{
+          x: [0, 40, 0, -40, 0],
+          y: [0, 50, 0, -50, 0],
+          scale: [1, 1.15, 0.85, 1],
+        }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute bottom-[-10%] right-[10%] w-[55vw] h-[55vw] rounded-full bg-[#00D4FF] opacity-[0.04]"
+        style={{ filter: 'blur(150px)' }}
       />
     </div>
   );
@@ -71,9 +83,11 @@ export default function Home() {
   ];
 
   return (
-    <main className="bg-[#03040A] text-[#E8EEF7] min-h-screen font-sans selection:bg-[#00D4FF] selection:text-black">
+    <main className="relative bg-[#03040A] text-[#E8EEF7] min-h-screen font-sans selection:bg-[#00D4FF] selection:text-black">
       
-      {/* ════ GLOBAL NOISE & SCROLLBAR FIX ════ */}
+      {/* ════ GLOBAL BACKGROUNDS ════ */}
+      <MovingGradient />
+      
       <style dangerouslySetInnerHTML={{__html: `
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #03040A; }
@@ -94,12 +108,8 @@ export default function Home() {
         ))}
       </nav>
 
-      {/* ════ HERO SECTION WITH MOVING GRADIENT ════ */}
+      {/* ════ HERO SECTION ════ */}
       <section id="home" className="relative min-h-screen flex items-center px-6 md:px-[8vw] overflow-hidden">
-        
-        {/* Soft Animated Background */}
-        <MovingGradient />
-        
         <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 md:grid-cols-2">
           <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="col-start-1">
             <motion.div variants={fadeUp} className="flex items-center gap-3 mb-6">
@@ -133,7 +143,7 @@ export default function Home() {
       </section>
 
       {/* ════ SKILLS BENTO GRID ════ */}
-      <section id="skills" className="px-6 md:px-[8vw] py-[120px] bg-[#060810] relative z-10 w-full">
+      <section id="skills" className="px-6 md:px-[8vw] py-[120px] relative z-10 w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">01</span>
           <h2 className="font-serif text-4xl md:text-[66px] font-light tracking-tight text-[#E8EEF7] leading-none col-start-1 row-start-1">Competencies</h2>
@@ -141,7 +151,7 @@ export default function Home() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="md:col-span-4 bg-[#161927] border border-white/5 p-7 rounded hover:border-white/10 hover:-translate-y-1 transition-all">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="md:col-span-4 bg-[#07090E]/80 backdrop-blur-md border border-white/5 p-7 rounded hover:border-white/10 hover:-translate-y-1 transition-all">
             <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[#C8A96E] mb-3.5 flex items-center gap-2"><div className="w-4 h-px bg-[#C8A96E]"/> Clinical</div>
             <h3 className="font-serif text-[26px] text-[#E8EEF7] leading-[1.1] mb-2.5">Patient Care</h3>
             <p className="text-[13px] text-white/50 leading-[1.7] mb-4">Ward rounds, prescription reviews, medication audits & pharmaceutical care planning.</p>
@@ -151,7 +161,7 @@ export default function Home() {
             </div>
           </motion.div>
 
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="md:col-span-4 bg-[#161927] border border-white/5 p-7 rounded hover:border-white/10 hover:-translate-y-1 transition-all">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="md:col-span-4 bg-[#07090E]/80 backdrop-blur-md border border-white/5 p-7 rounded hover:border-white/10 hover:-translate-y-1 transition-all">
             <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[#C8A96E] mb-3.5 flex items-center gap-2"><div className="w-4 h-px bg-[#C8A96E]"/> Research & CDM</div>
             <h3 className="font-serif text-[26px] text-[#E8EEF7] leading-[1.1] mb-2.5">Data Architecture</h3>
             <p className="text-[13px] text-white/50 leading-[1.7] mb-4">Protocol development, CRF design, statistical analysis & clinical data standards.</p>
@@ -162,7 +172,7 @@ export default function Home() {
             </div>
           </motion.div>
 
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="md:col-span-4 bg-[#0B0D18] border border-white/5 p-7 rounded hover:border-white/10 hover:-translate-y-1 transition-all">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="md:col-span-4 bg-[#05060A]/80 backdrop-blur-md border border-white/5 p-7 rounded hover:border-white/10 hover:-translate-y-1 transition-all">
             <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[#00E5A0] mb-3.5">── Technical</div>
             <div className="font-mono text-[11.5px] leading-loose mt-2">
               <div><span className="text-[#00D4FF]">import</span> <span className="text-[#E8C99A]">pandas</span> <span className="text-white/25">as pd</span></div>
@@ -174,7 +184,7 @@ export default function Home() {
       </section>
 
       {/* ════ EXPERIENCE TABS ════ */}
-      <section id="experience" className="px-6 md:px-[8vw] py-[120px] bg-[#0B0D18] w-full">
+      <section id="experience" className="px-6 md:px-[8vw] py-[120px] relative z-10 w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">02</span>
           <h2 className="font-serif text-4xl md:text-[66px] font-light tracking-tight text-[#E8EEF7] leading-none col-start-1 row-start-1">Experience</h2>
@@ -206,7 +216,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-3">
                 {experiences[activePhase].meta.map((m, i) => (
-                  <div key={i} className="bg-[#161927] border border-white/5 rounded p-5">
+                  <div key={i} className="bg-[#07090E]/80 backdrop-blur-md border border-white/5 rounded p-5">
                     <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[#C8A96E] mb-2">{m.label}</div>
                     <div className="text-[13px] text-white/50 leading-[1.6]">{m.val}</div>
                   </div>
@@ -218,7 +228,7 @@ export default function Home() {
       </section>
 
       {/* ════ PROJECTS GRID ════ */}
-      <section id="projects" className="px-6 md:px-[8vw] py-[120px] bg-[#03040A] w-full">
+      <section id="projects" className="px-6 md:px-[8vw] py-[120px] relative z-10 w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">03</span>
           <h2 className="font-serif text-4xl md:text-[66px] font-light tracking-tight text-[#E8EEF7] leading-none col-start-1 row-start-1">Projects</h2>
@@ -231,7 +241,7 @@ export default function Home() {
             { num: "02", badge: "Simulation · EdTech", title: "Clinical Simulator", color: "#00E5A0", tags: ["Rx Review", "Patient Scenarios"] },
             { num: "03", badge: "AI · Healthcare", title: "PharmAI", color: "#C8A96E", tags: ["Machine Learning", "Decision Support"] }
           ].map((proj, idx) => (
-            <motion.a key={idx} href="#" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group block relative bg-[#161927] border border-white/5 rounded p-8 hover:border-white/10 hover:-translate-y-2 transition-all duration-500">
+            <motion.a key={idx} href="#" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group block relative bg-[#07090E]/80 backdrop-blur-md border border-white/5 rounded p-8 hover:border-white/10 hover:-translate-y-2 transition-all duration-500">
               <div className="font-serif text-[80px] font-light leading-none mb-5 text-white/5 transition-opacity group-hover:text-white/10">{proj.num}</div>
               
               <div 
@@ -255,9 +265,9 @@ export default function Home() {
       </section>
 
       {/* ════ FOOTER ════ */}
-      <footer id="contact" className="px-6 md:px-[8vw] py-[120px] bg-[#03040A] flex flex-col items-center text-center border-t border-white/5">
+      <footer id="contact" className="px-6 md:px-[8vw] py-[120px] relative z-10 flex flex-col items-center text-center border-t border-white/5">
         <h2 className="font-serif text-5xl md:text-[88px] font-light text-[#E8EEF7] leading-[1.05] tracking-tight mb-5">Let's build something<br/><em className="italic text-[#00D4FF]">meaningful.</em></h2>
-        <a href="mailto:karmnaik@gmail.com" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="font-mono text-[10px] tracking-[0.1em] uppercase text-white/50 border border-white/10 px-6 py-3.5 rounded-sm hover:text-white hover:bg-white/5 transition-all mt-8">Get in Touch</a>
+        <a href="mailto:karmnaik@gmail.com" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="font-mono text-[10px] tracking-[0.1em] uppercase text-white/50 border border-white/10 px-6 py-3.5 rounded-sm hover:text-white hover:bg-white/5 transition-all mt-8 backdrop-blur-md">Get in Touch</a>
       </footer>
     </main>
   );
