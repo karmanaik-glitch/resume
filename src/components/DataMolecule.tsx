@@ -3,7 +3,6 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere, Line } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 export default function DataMolecule() {
@@ -13,29 +12,27 @@ export default function DataMolecule() {
   const { nodes, edges } = useMemo(() => {
     const generatedNodes: { position: [number, number, number]; color: string; size: number }[] = [];
     const generatedEdges: [readonly [number, number, number], readonly [number, number, number]][] = [];
-    const count = 45;
+    const count = 50;
 
-    // 1. Create nodes in a scattered spherical pattern
     for (let i = 0; i < count; i++) {
       const phi = Math.acos(-1 + (2 * i) / count);
       const theta = Math.sqrt(count * Math.PI) * phi;
       
-      // Radius of the molecule
       const r = 2.5 + (Math.random() * 0.5 - 0.25); 
       
       const x = r * Math.sin(phi) * Math.cos(theta);
       const y = r * Math.sin(phi) * Math.sin(theta);
       const z = r * Math.cos(phi);
 
-      // Distribute brand colors
-      let color = 'rgba(232, 238, 247, 0.4)'; // Ice Dim
-      if (i % 4 === 0) color = '#00D4FF';      // Clinical Cyan
-      if (i % 7 === 0) color = '#C8A96E';      // Clinical Gold
+      // Distribute subtle, muted brand colors
+      let color = '#2A3045'; // Muted dark blue/grey for the majority
+      if (i % 4 === 0) color = '#008B99'; // Deep, muted Cyan
+      if (i % 7 === 0) color = '#8C7040'; // Deep, muted Gold
 
-      generatedNodes.push({ position: [x, y, z], color, size: Math.random() * 0.08 + 0.04 });
+      generatedNodes.push({ position: [x, y, z], color, size: Math.random() * 0.06 + 0.03 });
     }
 
-    // 2. Connect nodes that are close to each other
+    // Connect nearby nodes
     for (let i = 0; i < count; i++) {
       for (let j = i + 1; j < count; j++) {
         const a = generatedNodes[i].position;
@@ -53,53 +50,43 @@ export default function DataMolecule() {
     return { nodes: generatedNodes, edges: generatedEdges };
   }, []);
 
-  // Slowly rotate the entire molecule
+  // Slowly, elegantly rotate the structure
   useFrame((state, delta) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.15;
+      groupRef.current.rotation.y += delta * 0.1;
       groupRef.current.rotation.x += delta * 0.05;
     }
   });
 
   return (
     <>
-      <OrbitControls 
-        enableZoom={false} 
-        enablePan={false} 
-        autoRotate 
-        autoRotateSpeed={0.5} 
-      />
+      <OrbitControls enableZoom={false} enablePan={false} />
       
-      {/* High-end glow effect */}
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} />
-      </EffectComposer>
-
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 10]} intensity={1} />
+      {/* Soft, premium lighting */}
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[5, 10, 5]} intensity={1.5} color="#ffffff" />
+      <directionalLight position={[-5, -10, -5]} intensity={0.5} color="#E8EEF7" />
 
       <group ref={groupRef}>
-        {/* Render the connections (lines) */}
+        {/* Subtle, barely-there connecting lines */}
         {edges.map((edge, i) => (
           <Line 
             key={`edge-${i}`} 
             points={edge as any} 
-            color="#00D4FF" 
-            lineWidth={1} 
+            color="#E8EEF7" 
+            lineWidth={0.5} 
             transparent 
-            opacity={0.15} 
+            opacity={0.05} 
           />
         ))}
 
-        {/* Render the data points (spheres) */}
+        {/* Matte, solid data points */}
         {nodes.map((node, i) => (
-          <Sphere key={`node-${i}`} args={[node.size, 16, 16]} position={node.position}>
+          <Sphere key={`node-${i}`} args={[node.size, 32, 32]} position={node.position}>
             <meshStandardMaterial 
               color={node.color} 
-              emissive={node.color}
-              emissiveIntensity={node.color !== 'rgba(232, 238, 247, 0.4)' ? 2 : 0}
-              transparent
-              opacity={0.9}
+              roughness={0.7} // Makes it look matte and sophisticated
+              metalness={0.2}
             />
           </Sphere>
         ))}
