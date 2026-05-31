@@ -1,101 +1,109 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text3D, Center, Float, Environment, ContactShadows } from '@react-three/drei';
+import { OrbitControls, Sphere, Line } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 export default function DataMolecule() {
   const groupRef = useRef<THREE.Group>(null);
-  const currentScroll = useRef(0);
 
+  // Generate the math for the molecule structure
+  const { nodes, edges } = useMemo(() => {
+    const generatedNodes: { position: [number, number, number]; color: string; size: number }[] = [];
+    const generatedEdges: [readonly [number, number, number], readonly [number, number, number]][] = [];
+    const count = 45;
+
+    // 1. Create nodes in a scattered spherical pattern
+    for (let i = 0; i < count; i++) {
+      const phi = Math.acos(-1 + (2 * i) / count);
+      const theta = Math.sqrt(count * Math.PI) * phi;
+      
+      // Radius of the molecule
+      const r = 2.5 + (Math.random() * 0.5 - 0.25); 
+      
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.sin(phi) * Math.sin(theta);
+      const z = r * Math.cos(phi);
+
+      // Distribute brand colors
+      let color = 'rgba(232, 238, 247, 0.4)'; // Ice Dim
+      if (i % 4 === 0) color = '#00D4FF';      // Clinical Cyan
+      if (i % 7 === 0) color = '#C8A96E';      // Clinical Gold
+
+      generatedNodes.push({ position: [x, y, z], color, size: Math.random() * 0.08 + 0.04 });
+    }
+
+    // 2. Connect nodes that are close to each other
+    for (let i = 0; i < count; i++) {
+      for (let j = i + 1; j < count; j++) {
+        const a = generatedNodes[i].position;
+        const b = generatedNodes[j].position;
+        const distance = Math.sqrt(
+          Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2) + Math.pow(a[2] - b[2], 2)
+        );
+        
+        if (distance < 1.8) {
+          generatedEdges.push([a, b]);
+        }
+      }
+    }
+
+    return { nodes: generatedNodes, edges: generatedEdges };
+  }, []);
+
+  // Slowly rotate the entire molecule
   useFrame((state, delta) => {
-    if (!groupRef.current) return;
-
-    // 1. KINETIC MOUSE TRACKING: The entire text group tilts toward your cursor
-    const targetRotationX = (state.pointer.y * Math.PI) / 8; // Tilt up/down
-    const targetRotationY = (state.pointer.x * Math.PI) / 6; // Tilt left/right
-
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -targetRotationX, delta * 3);
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotationY, delta * 3);
-
-    // 2. SCROLL PARALLAX: The text moves upward as you scroll down
-    const scrollY = window.scrollY;
-    const maxScroll = Math.max(document.body.scrollHeight - window.innerHeight, 1);
-    const scrollPercent = scrollY / maxScroll;
-
-    currentScroll.current = THREE.MathUtils.lerp(currentScroll.current, scrollPercent, delta * 5);
-    groupRef.current.position.y = currentScroll.current * 8;
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.15;
+      groupRef.current.rotation.x += delta * 0.05;
+    }
   });
-
-  // We use a reliable CDN for the 3D font JSON so it works instantly without downloading files
-  const fontUrl = "https://cdn.jsdelivr.net/npm/three/examples/fonts/helvetiker_bold.typeface.json";
 
   return (
     <>
-      <Environment preset="city" />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 10, 5]} intensity={1.5} />
-      <directionalLight position={[-5, -10, -5]} intensity={0.5} color="#00D4FF" />
+      <OrbitControls 
+        enableZoom={false} 
+        enablePan={false} 
+        autoRotate 
+        autoRotateSpeed={0.5} 
+      />
+      
+      {/* High-end glow effect */}
+      <EffectComposer>
+        <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} />
+      </EffectComposer>
+
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10, 10, 10]} intensity={1} />
 
       <group ref={groupRef}>
-        <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-          <Center>
-            <group position={[0, 1, 0]}>
-              {/* TOP WORD: CLINICAL */}
-              <Text3D 
-                font={fontUrl}
-                size={1.2}
-                height={0.4} // Extrusion depth (makes it 3D)
-                curveSegments={12}
-                bevelEnabled
-                bevelThickness={0.02}
-                bevelSize={0.02}
-                bevelOffset={0}
-                bevelSegments={5}
-                position={[-4, 0, 0]} // Offset to center it manually
-              >
-                CLINICAL
-                <meshStandardMaterial 
-                  color="#ffffff" 
-                  metalness={0.8} 
-                  roughness={0.2} 
-                />
-              </Text3D>
+        {/* Render the connections (lines) */}
+        {edges.map((edge, i) => (
+          <Line 
+            key={`edge-${i}`} 
+            points={edge as any} 
+            color="#00D4FF" 
+            lineWidth={1} 
+            transparent 
+            opacity={0.15} 
+          />
+        ))}
 
-              {/* BOTTOM WORD: DATA */}
-              <Text3D 
-                font={fontUrl}
-                size={1.2}
-                height={0.4}
-                curveSegments={12}
-                bevelEnabled
-                bevelThickness={0.02}
-                bevelSize={0.02}
-                bevelOffset={0}
-                bevelSegments={5}
-                position={[-2.2, -1.8, 0]}
-              >
-                DATA
-                <meshStandardMaterial 
-                  color="#C8A96E" // Clinical Gold
-                  metalness={0.8} 
-                  roughness={0.2} 
-                />
-              </Text3D>
-            </group>
-          </Center>
-        </Float>
+        {/* Render the data points (spheres) */}
+        {nodes.map((node, i) => (
+          <Sphere key={`node-${i}`} args={[node.size, 16, 16]} position={node.position}>
+            <meshStandardMaterial 
+              color={node.color} 
+              emissive={node.color}
+              emissiveIntensity={node.color !== 'rgba(232, 238, 247, 0.4)' ? 2 : 0}
+              transparent
+              opacity={0.9}
+            />
+          </Sphere>
+        ))}
       </group>
-
-      {/* A subtle shadow caught beneath the floating text */}
-      <ContactShadows 
-        position={[0, -3.5, 0]} 
-        opacity={0.4} 
-        scale={20} 
-        blur={2} 
-        far={10} 
-      />
     </>
   );
 }
