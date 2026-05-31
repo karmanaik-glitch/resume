@@ -1,91 +1,20 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence, Variants, useScroll, useTransform, MotionValue } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 
-// ══════════════ 1. ANIMATION VARIANTS ══════════════
+// ══════════════ ANIMATION VARIANTS (STRICT TYPESCRIPT) ══════════════
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
 };
 
-// ══════════════ 2. MATRIX ASSEMBLY COMPONENTS ══════════════
-const AnimatedLetter = ({ char, progress, randomData }: { char: string; progress: MotionValue<number>; randomData: any }) => {
-  const x = useTransform(progress, [0, 1], [randomData.x, 0]);
-  const y = useTransform(progress, [0, 1], [randomData.y, 0]);
-  const z = useTransform(progress, [0, 1], [randomData.z, 0]);
-  const rotate = useTransform(progress, [0, 1], [randomData.rotate, 0]);
-  const opacity = useTransform(progress, [0, 0.6, 1], [0, 1, 1]);
-  const filter = useTransform(progress, [0, 1], [`blur(${randomData.blur}px)`, 'blur(0px)']);
-
-  return (
-    <motion.span
-      style={{ x, y, z, rotate, opacity, filter, display: 'inline-block', whiteSpace: char === ' ' ? 'pre' : 'normal' }}
-      className="will-change-transform"
-    >
-      {char}
-    </motion.span>
-  );
+const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 
-const MatrixHero = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end center"] 
-  });
-
-  const heading1 = "KARMA NAIK";
-  const heading2 = "CLINICAL DATA INTELLIGENCE";
-
-  const generateRandoms = (text: string) => {
-    return text.split('').map(() => ({
-      x: (Math.random() - 0.5) * 1500,
-      y: (Math.random() - 0.5) * 1000,
-      z: (Math.random() - 0.5) * 1000,
-      rotate: (Math.random() - 0.5) * 720,
-      blur: Math.random() * 15 + 5,
-    }));
-  };
-
-  const randoms1 = useMemo(() => generateRandoms(heading1), []);
-  const randoms2 = useMemo(() => generateRandoms(heading2), []);
-
-  return (
-    <div ref={containerRef} className="h-[200vh] relative w-full bg-[#03040A]">
-      <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden px-6 perspective-[1000px]">
-        
-        <div className="flex items-center gap-3 mb-8">
-          <motion.div style={{ opacity: scrollYProgress }} className="w-8 h-px bg-[#C8A96E]" />
-          <motion.span style={{ opacity: scrollYProgress }} className="font-mono text-[10px] tracking-[0.18em] uppercase text-[#C8A96E]">
-            Pharm.D · CDM · Healthcare AI
-          </motion.span>
-        </div>
-
-        <h1 className="font-serif text-5xl md:text-[112px] font-light leading-none tracking-tight text-[#E8EEF7] mb-4 text-center">
-          {heading1.split('').map((char, i) => (
-            <AnimatedLetter key={i} char={char} progress={scrollYProgress} randomData={randoms1[i]} />
-          ))}
-        </h1>
-
-        <h2 className="font-mono text-sm md:text-xl tracking-[0.2em] text-[#00D4FF] text-center max-w-3xl">
-          {heading2.split('').map((char, i) => (
-            <AnimatedLetter key={i} char={char} progress={scrollYProgress} randomData={randoms2[i]} />
-          ))}
-        </h2>
-
-        <motion.p 
-          style={{ opacity: scrollYProgress }}
-          className="mt-12 text-white/50 max-w-lg text-center text-[15px] leading-relaxed"
-        >
-          Bridging pharmaceutical expertise with data architecture — transforming patient-level clinical observations into rigorous, trial-ready insights.
-        </motion.p>
-      </div>
-    </div>
-  );
-};
-
-// ══════════════ 3. MAIN PAGE COMPONENT ══════════════
+// ══════════════ MAIN PAGE COMPONENT ══════════════
 export default function Home() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
@@ -111,7 +40,6 @@ export default function Home() {
   ];
 
   return (
-    // Removed overflow-x-hidden here to fix the sticky scroll bug
     <main className="bg-[#03040A] text-[#E8EEF7] min-h-screen font-sans selection:bg-[#00D4FF] selection:text-black">
       
       {/* GLOBAL NOISE & SCROLLBAR */}
@@ -119,7 +47,7 @@ export default function Home() {
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #03040A; }
         ::-webkit-scrollbar-thumb { background: #8C7040; }
-        html, body { overflow-x: hidden; } /* Applied safely to body instead of main */
+        html, body { overflow-x: hidden; }
         .noise-overlay { position: fixed; inset: 0; z-index: 9997; pointer-events: none; opacity: 0.02; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E"); }
       `}} />
       <div className="noise-overlay" />
@@ -135,11 +63,45 @@ export default function Home() {
         ))}
       </nav>
 
-      {/* 1. MATRIX HERO SECTION */}
-      <MatrixHero />
+      {/* 1. CLEAN STATIC HERO SECTION */}
+      <section id="home" className="relative min-h-screen flex items-center px-6 md:px-[8vw]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(0,212,255,0.05)_0%,_transparent_60%)] pointer-events-none" />
+        
+        <div className="relative z-10 w-full max-w-7xl">
+          <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
+            
+            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-px bg-[#C8A96E]" />
+              <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-[#C8A96E]">Pharm.D · CDM · Healthcare AI</span>
+            </motion.div>
+            
+            <motion.h1 variants={fadeUp} className="font-serif text-6xl md:text-[112px] font-light leading-[0.92] tracking-tight text-[#E8EEF7] mb-4">
+              Karma<br/>
+              <span className="italic bg-clip-text text-transparent bg-gradient-to-br from-[#00D4FF] to-[#7AEAFF]">Naik</span>
+            </motion.h1>
+            
+            <motion.p variants={fadeUp} className="font-mono text-xs md:text-sm tracking-[0.12em] uppercase text-[#00D4FF] mb-8">
+              Clinical Data Management & Healthcare Intelligence
+            </motion.p>
+            
+            <motion.p variants={fadeUp} className="text-[15px] leading-[1.8] text-white/50 max-w-[480px] mb-11">
+              Bridging pharmaceutical expertise with data architecture — transforming patient-level clinical observations into rigorous, trial-ready insights.
+            </motion.p>
+            
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-4">
+              <a href="#projects" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="font-mono text-[11px] tracking-[0.1em] uppercase text-[#03040A] bg-[#00D4FF] px-8 py-3.5 rounded-sm hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,212,255,0.25)] transition-all">
+                View Projects
+              </a>
+              <a href="#contact" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="font-mono text-[11px] tracking-[0.1em] uppercase text-white/50 border border-white/10 px-8 py-3.5 rounded-sm hover:text-white hover:border-white/30 transition-all">
+                Get in Touch
+              </a>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
 
       {/* 2. SKILLS BENTO GRID */}
-      <section id="skills" className="px-6 md:px-[8vw] py-[120px] bg-[#060810] relative z-10 w-full overflow-hidden">
+      <section id="skills" className="px-6 md:px-[8vw] py-[120px] bg-[#060810] relative z-10 w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">01</span>
           <h2 className="font-serif text-4xl md:text-[66px] font-light tracking-tight text-[#E8EEF7] leading-none col-start-1 row-start-1">Competencies</h2>
@@ -180,7 +142,7 @@ export default function Home() {
       </section>
 
       {/* 3. EXPERIENCE TABS */}
-      <section id="experience" className="px-6 md:px-[8vw] py-[120px] bg-[#0B0D18] w-full overflow-hidden">
+      <section id="experience" className="px-6 md:px-[8vw] py-[120px] bg-[#0B0D18] w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">02</span>
           <h2 className="font-serif text-4xl md:text-[66px] font-light tracking-tight text-[#E8EEF7] leading-none col-start-1 row-start-1">Experience</h2>
@@ -224,7 +186,7 @@ export default function Home() {
       </section>
 
       {/* 4. PROJECTS GRID */}
-      <section id="projects" className="px-6 md:px-[8vw] py-[120px] bg-[#03040A] w-full overflow-hidden">
+      <section id="projects" className="px-6 md:px-[8vw] py-[120px] bg-[#03040A] w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">03</span>
           <h2 className="font-serif text-4xl md:text-[66px] font-light tracking-tight text-[#E8EEF7] leading-none col-start-1 row-start-1">Projects</h2>
@@ -240,7 +202,7 @@ export default function Home() {
             <motion.a key={idx} href="#" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group block relative bg-[#161927] border border-white/5 rounded p-8 hover:border-white/10 hover:-translate-y-2 transition-all duration-500">
               <div className="font-serif text-[80px] font-light leading-none mb-5 text-white/5 transition-opacity group-hover:text-white/10">{proj.num}</div>
               
-              {/* FIXED TAILWIND DYNAMIC COLOR BUG BY USING INLINE STYLES FOR THE HEX COLORS */}
+              {/* Using safe inline styles to prevent Tailwind compilation bugs */}
               <div 
                 className="font-mono text-[9px] tracking-[0.12em] uppercase px-2.5 py-1 rounded-sm border inline-block mb-5"
                 style={{ color: proj.color, borderColor: `${proj.color}40`, backgroundColor: `${proj.color}0D` }}
