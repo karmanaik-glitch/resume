@@ -36,16 +36,14 @@ export default function DataMolecule() {
 
   return (
     <>
-      {/* ENVIRONMENT: Glass needs something to reflect to look real. 
-        This adds invisible studio lighting to the scene. 
-      */}
+      {/* Invisible studio lighting to create reflections on the glass */}
       <Environment preset="city" />
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 10]} intensity={2} />
 
       <group ref={groupRef}>
         
-        {/* BACKGROUND TYPOGRAPHY (Option 4) */}
+        {/* BACKGROUND TYPOGRAPHY */}
         {/* Placed far back in the Z-axis (-6) so the lens can float in front of it */}
         <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5}>
           <Text
@@ -74,29 +72,28 @@ export default function DataMolecule() {
           </Text>
         </Float>
 
-        {/* THE SPATIAL GLASS LENS (Option 1) */}
+        {/* THE SPATIAL GLASS LENS */}
         {/* Positioned in front (Z=2) to bend the light of the text behind it */}
         <mesh ref={lensRef} position={[0, 0, 2]} scale={2.5}>
-          {/* We use an Icosahedron (geometric sphere) with high detail */}
           <icosahedronGeometry args={[1, 16]} />
           
-          {/* THE MAGIC: Real-time physical glass shader */}
           <MeshTransmissionMaterial
-            backside={true}         // Renders the inside of the glass
-            samples={4}             // Quality of the blur
-            thickness={2.5}         // Volume for the text to bend through
-            chromaticAberration={0.1} // Adds slight rainbow edge dispersion
-            anisotropy={0.3}        // How light scatters
+            backside={true}         
+            samples={4}             
+            thickness={2.5}         
+            chromaticAberration={0.1} // Rainbow edge dispersion
+            anisotropy={0.3}        
             distortion={0.3}        // Ripples the surface slightly
             distortionScale={0.5}
-            temporalDistortion={0.1} // Makes the distortion move over time
-            ior={1.4}               // Index of Refraction (bends light heavily)
+            temporalDistortion={0.1} 
+            ior={1.4}               // Bends light heavily
             color="#ffffff"
-            roughness={0.05}        // Gives it a highly polished, expensive feel
+            roughness={0.05}        // Highly polished feel
           />
         </mesh>
 
       </group>
     </>
   );
+}
 }
