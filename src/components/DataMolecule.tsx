@@ -6,96 +6,77 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 // --------------------------------------------------------
-// 1. ADVANCED VERTEX SHADER (Calculates 100,000 points on the GPU)
+// 1. VERTEX SHADER (Passes coordinates to the fragment shader)
 // --------------------------------------------------------
 const vertexShader = `
+  varying vec3 vPos;
+  
+  void main() {
+    vPos = position;
+    // We create a gentle topographical "wave" so the grid isn't perfectly flat
+    float wave = sin(position.x * 0.5) * cos(position.y * 0.5) * 0.5;
+    vec3 newPos = vec3(position.x, position.y, position.z + wave);
+    
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.0);
+  }
+`;
+
+// --------------------------------------------------------
+// 2. FRAGMENT SHADER (Draws the grid, the scanner, and the fog)
+// --------------------------------------------------------
+const fragmentShader = `
+  varying vec3 vPos;
   uniform float uTime;
   uniform float uScroll;
   
-  attribute float aRandom;
-  varying vec3 vColor;
-
   void main() {
-    vec3 pos = position;
+    // 1. Move the grid based on time and scroll depth
+    vec2 uv = vPos.xy * 1.5; 
+    uv.y -= uTime * 0.5;      // Constant slow forward movement
+    uv.y -= uScroll * 15.0;   // Moves faster when user scrolls
     
-    // FLUID NOISE MATH: Creates organic, flowing waves inside the particle system
-    float noiseFreq = 0.5;
-    float noiseAmp = 0.4;
-    vec3 noisePos = vec3(pos.x * noiseFreq + uTime * 0.5, pos.y * noiseFreq - uTime * 0.2, pos.z * noiseFreq);
+    // 2. Mathematical Grid Generation (Thick main grid)
+    vec2 grid = abs(fract(uv - 0.5) - 0.5);
+    vec2 lines = smoothstep(0.03, 0.0, grid);
+    float gridAlpha = max(lines.x, lines.y);
     
-    pos.x += sin(noisePos.y) * cos(noisePos.z) * noiseAmp;
-    pos.y += sin(noisePos.z) * cos(noisePos.x) * noiseAmp;
-    pos.z += sin(noisePos.x) * cos(noisePos.y) * noiseAmp;
+    // 3. Sub-grid Generation (Fainter, smaller squares inside the main grid)
+    vec2 subUv = uv * 4.0;
+    vec2 subGrid = abs(fract(subUv - 0.5) - 0.5);
+    vec2 subLines = smoothstep(0.03, 0.0, subGrid);
+    float subGridAlpha = max(subLines.x, subLines.y) * 0.15; // Much fainter
     
-    // SCROLL PHYSICS: Twist the particles into a tighter vortex as the user scrolls
-    float twistAmount = uScroll * 15.0; // How hard it twists
-    float angle = atan(pos.z, pos.x) + (twistAmount * aRandom * (pos.y * 0.1));
-    float radius = length(pos.xz);
+    float totalGrid = max(gridAlpha, subGridAlpha);
     
-    pos.x = cos(angle) * radius;
-    pos.z = sin(angle) * radius;
-
-    // COLOR INTERPOLATION: Cyan to Gold based on scroll depth and Y-position
-    vec3 cyan = vec3(0.0, 0.83, 1.0);  // #00D4FF
-    vec3 gold = vec3(0.78, 0.66, 0.43); // #C8A96E
-    float mixFactor = (pos.y + 10.0) / 20.0 + (uScroll * 0.5);
-    vColor = mix(cyan, gold, clamp(mixFactor, 0.0, 1.0));
-
-    // PROJECTION
-    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+    // 4. The "Scanner Sweep" Effect (A horizontal line moving across the data)
+    float scanner = sin(vPos.y * 0.5 + uTime * 1.5);
+    float scannerLine = smoothstep(0.98, 1.0, scanner);
+    float scannerGlow = smoothstep(0.7, 1.0, scanner) * 0.3;
     
-    // Particles get smaller the further away they are (Depth of Field effect)
-    gl_PointSize = (8.0 * aRandom) * (1.0 / -mvPosition.z);
-    gl_Position = projectionMatrix * mvPosition;
+    // 5. Colors (Clinical Cyan)
+    vec3 baseColor = vec3(0.0, 0.83, 1.0); 
+    
+    // 6. Depth Fog (Fades the grid into the background so it looks infinite)
+    float distanceToCenter = length(vPos.xy);
+    float depthFade = smoothstep(20.0, 5.0, distanceToCenter);
+    
+    // Combine everything
+    vec3 finalColor = baseColor * totalGrid * 0.5 + baseColor * (scannerLine + scannerGlow);
+    float finalAlpha = (totalGrid * 0.4 + scannerLine + scannerGlow) * depthFade;
+    
+    // Discard completely empty pixels to ensure perfect transparency with the CSS background
+    if (finalAlpha < 0.02) discard;
+    
+    gl_FragColor = vec4(finalColor, finalAlpha);
   }
 `;
 
 // --------------------------------------------------------
-// 2. FRAGMENT SHADER (Renders perfectly soft glowing orbs)
-// --------------------------------------------------------
-const fragmentShader = `
-  varying vec3 vColor;
-  
-  void main() {
-    // Instead of rendering ugly square pixels, we use math to draw a soft circle
-    float distanceToCenter = distance(gl_PointCoord, vec2(0.5));
-    float strength = 0.05 / distanceToCenter - 0.1; // Soft glowing edge
-    
-    if (strength < 0.0) discard; // Don't render pure black pixels
-    
-    gl_FragColor = vec4(vColor, strength * 1.5);
-  }
-`;
-
-// --------------------------------------------------------
-// 3. MAIN COMPONENT
+// 3. REACT COMPONENT
 // --------------------------------------------------------
 export default function DataMolecule() {
-  const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const currentScroll = useRef(0);
-
-  // Generate 100,000 particles in a massive spatial cylinder
-  const particleCount = 100000;
-  
-  const { positions, randoms } = useMemo(() => {
-    const positions = new Float32Array(particleCount * 3);
-    const randoms = new Float32Array(particleCount);
-
-    for (let i = 0; i < particleCount; i++) {
-      // Create a cylindrical galaxy shape
-      const radius = Math.random() * Math.random() * 8; // Concentrated in the center
-      const angle = Math.random() * Math.PI * 2;
-      const height = (Math.random() - 0.5) * 25; // How tall the vortex is
-      
-      positions[i * 3] = Math.cos(angle) * radius;
-      positions[i * 3 + 1] = height;
-      positions[i * 3 + 2] = Math.sin(angle) * radius;
-      
-      randoms[i] = Math.random(); // Pass random numbers to GPU for variance
-    }
-    return { positions, randoms };
-  }, []);
 
   const uniforms = useMemo(() => ({
     uTime: { value: 0 },
@@ -103,41 +84,34 @@ export default function DataMolecule() {
   }), []);
 
   useFrame((state, delta) => {
-    if (!materialRef.current || !pointsRef.current) return;
+    if (!materialRef.current) return;
 
-    // 1. Update Time for the fluid noise
+    // Update time
     materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
 
-    // 2. Calculate Smooth Scroll
+    // Smooth Scroll Capture
     const scrollY = window.scrollY;
     const maxScroll = Math.max(document.body.scrollHeight - window.innerHeight, 1);
     const scrollPercent = scrollY / maxScroll;
     
-    currentScroll.current = THREE.MathUtils.lerp(currentScroll.current, scrollPercent, delta * 4);
+    currentScroll.current = THREE.MathUtils.lerp(currentScroll.current, scrollPercent, delta * 5);
 
-    // 3. Send Scroll Data to GPU
+    // Send smooth scroll to shader
     materialRef.current.uniforms.uScroll.value = currentScroll.current;
-
-    // 4. Move the camera "down" into the tunnel as they scroll
-    pointsRef.current.position.y = currentScroll.current * 15;
-    
-    // Add a very slow ambient rotation
-    pointsRef.current.rotation.y = state.clock.elapsedTime * 0.05;
   });
 
   return (
     <>
       <EffectComposer>
-        {/* mipmapBlur creates that expensive, hazy cinematic glow */}
-        <Bloom luminanceThreshold={0.01} mipmapBlur intensity={1.2} />
+        {/* Subtle bloom gives the grid lines a high-end LED screen feel */}
+        <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.0} />
       </EffectComposer>
 
-      <points ref={pointsRef}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-          <bufferAttribute attach="attributes-aRandom" args={[randoms, 1]} />
-        </bufferGeometry>
-        
+      {/* We use a massive plane geometry (40x40).
+        By rotating it on the X-axis, it lays flat like a floor beneath your content.
+      */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, -5]}>
+        <planeGeometry args={[40, 40, 64, 64]} />
         <shaderMaterial
           ref={materialRef}
           vertexShader={vertexShader}
@@ -147,7 +121,7 @@ export default function DataMolecule() {
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
-      </points>
+      </mesh>
     </>
   );
 }
