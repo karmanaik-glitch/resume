@@ -1,74 +1,47 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Line } from '@react-three/drei';
+import { MeshDistortMaterial, Float } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 export default function DataMolecule() {
-  const groupRef = useRef<THREE.Group>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
 
-  const { nodes, lines } = useMemo(() => {
-    const tempNodes = [];
-    const tempLines = [];
-    const NODE_COUNT = 20;
-    const RADIUS = 2.5;
-
-    for (let i = 0; i < NODE_COUNT; i++) {
-      const phi = Math.acos(-1 + (2 * i) / NODE_COUNT);
-      const theta = Math.sqrt(NODE_COUNT * Math.PI) * phi;
-      const x = RADIUS * Math.sin(phi) * Math.cos(theta);
-      const y = RADIUS * Math.sin(phi) * Math.sin(theta);
-      const z = RADIUS * Math.cos(phi);
-
-      let color = '#E8EEF7'; 
-      let isPrimary = false;
-      if (i % 4 === 0) { color = '#00D4FF'; isPrimary = true; } 
-      else if (i % 7 === 0) { color = '#C8A96E'; isPrimary = true; } 
-
-      tempNodes.push({ position: new THREE.Vector3(x, y, z), color, isPrimary });
-    }
-
-    for (let i = 0; i < NODE_COUNT; i++) {
-      for (let j = i + 1; j < NODE_COUNT; j++) {
-        const distance = tempNodes[i].position.distanceTo(tempNodes[j].position);
-        if (distance < 2.8) {
-          tempLines.push({
-            start: tempNodes[i].position,
-            end: tempNodes[j].position,
-            opacity: tempNodes[i].isPrimary || tempNodes[j].isPrimary ? 0.3 : 0.05
-          });
-        }
-      }
-    }
-    return { nodes: tempNodes, lines: tempLines };
-  }, []);
-
+  // Slowly rotate the entire liquid shape
   useFrame((state, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.1;
-      groupRef.current.rotation.x += delta * 0.05;
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.2;
+    if (meshRef.current) {
+      meshRef.current.rotation.y += delta * 0.1;
+      meshRef.current.rotation.z += delta * 0.05;
     }
   });
 
   return (
     <>
       <EffectComposer>
-        <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} />
+        <Bloom luminanceThreshold={0.5} mipmapBlur intensity={1.2} />
       </EffectComposer>
-      <group ref={groupRef} position={[0, 0, 0]}>
-        {lines.map((line, i) => (
-          <Line key={`line-${i}`} points={[line.start, line.end]} color="#00D4FF" lineWidth={1} transparent opacity={line.opacity} />
-        ))}
-        {nodes.map((node, i) => (
-          <mesh key={`node-${i}`} position={node.position}>
-            <sphereGeometry args={[node.isPrimary ? 0.08 : 0.04, 16, 16]} />
-            <meshStandardMaterial color={node.color} emissive={node.color} emissiveIntensity={node.isPrimary ? 2 : 0.5} toneMapped={false} />
-          </mesh>
-        ))}
-      </group>
+
+      {/* Float makes it gently bob up and down like it's in zero-gravity */}
+      <Float speed={1.5} rotationIntensity={1} floatIntensity={2}>
+        <mesh ref={meshRef} scale={1.8}>
+          {/* A complex interlocking torus knot shape */}
+          <torusKnotGeometry args={[1, 0.3, 128, 32]} />
+          
+          {/* The magic: A shader that warps the geometry like liquid */}
+          <MeshDistortMaterial
+            color="#161927"           // Matches your surface color
+            emissive="#00D4FF"        // Clinical Cyan glow
+            emissiveIntensity={0.2}
+            distort={0.4}             // How much it morphs
+            speed={2}                 // Speed of the morphing
+            roughness={0.2}           // Makes it look shiny/wet
+            metalness={0.8}
+            wireframe={true}          // Keeps it tech-focused rather than a solid blob
+          />
+        </mesh>
+      </Float>
     </>
   );
 }
