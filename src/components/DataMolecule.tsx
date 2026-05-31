@@ -6,60 +6,113 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 export default function DataMolecule() {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const pointsRef = useRef<THREE.Points>(null);
+  const linesRef = useRef<THREE.LineSegments>(null);
 
-  // Create a high-density plane geometry
-  const geometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(25, 25, 60, 60);
-    // Rotate it to lay flat like a floor/landscape
-    geo.rotateX(-Math.PI / 2);
-    return geo;
+  const particleCount = 150;
+  const maxDistance = 2.5;
+
+  // Initialize positions and velocities
+  const { particlesData, positions } = useMemo(() => {
+    const positions = new Float32Array(particleCount * 3);
+    const particlesData = [];
+    
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 10;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+
+      particlesData.push({
+        velocity: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02,
+          (Math.random() - 0.5) * 0.02
+        ),
+        numConnections: 0,
+      });
+    }
+    return { particlesData, positions };
   }, []);
 
-  useFrame((state) => {
-    if (!meshRef.current) return;
+  // Initialize line geometry buffer
+  const linePositions = useMemo(() => new Float32Array(particleCount * particleCount * 3), []);
 
-    const time = state.clock.getElapsedTime();
-    const positions = meshRef.current.geometry.attributes.position;
+  useFrame(() => {
+    if (!pointsRef.current || !linesRef.current) return;
 
-    // Iterate through every vertex on the plane
-    for (let i = 0; i < positions.count; i++) {
-      const x = positions.getX(i);
-      const z = positions.getZ(i);
+    let vertexpos = 0;
+    let numConnected = 0;
 
-      // Apply mathematical waves to create rolling topography
-      const waveX1 = 0.5 * Math.sin(x * 0.5 + time * 0.7);
-      const waveZ1 = 0.5 * Math.sin(z * 0.5 + time * 0.5);
-      const waveX2 = 0.2 * Math.sin(x * 1.5 - time * 1.2);
-      const waveZ2 = 0.2 * Math.sin(z * 1.5 + time * 0.8);
+    const pointPositions = pointsRef.current.geometry.attributes.position.array as Float32Array;
 
-      // Modify the Y-axis (height) of the vertex
-      positions.setY(i, waveX1 + waveZ1 + waveX2 + waveZ2);
+    // Reset connections
+    for (let i = 0; i < particleCount; i++) particlesData[i].numConnections = 0;
+
+    for (let i = 0; i < particleCount; i++) {
+      // Update positions based on velocity
+      pointPositions[i * 3] += particlesData[i].velocity.x;
+      pointPositions[i * 3 + 1] += particlesData[i].velocity.y;
+      pointPositions[i * 3 + 2] += particlesData[i].velocity.z;
+
+      // Bounce off invisible boundaries
+      if (Math.abs(pointPositions[i * 3]) > 5) particlesData[i].velocity.x *= -1;
+      if (Math.abs(pointPositions[i * 3 + 1]) > 5) particlesData[i].velocity.y *= -1;
+      if (Math.abs(pointPositions[i * 3 + 2]) > 5) particlesData[i].velocity.z *= -1;
+
+      // Check distance against other particles to draw lines
+      for (let j = i + 1; j < particleCount; j++) {
+        const dx = pointPositions[i * 3] - pointPositions[j * 3];
+        const dy = pointPositions[i * 3 + 1] - pointPositions[j * 3 + 1];
+        const dz = pointPositions[i * 3 + 2] - pointPositions[j * 3 + 2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (dist < maxDistance) {
+          particlesData[i].numConnections++;
+          particlesData[j].numConnections++;
+
+          linePositions[vertexpos++] = pointPositions[i * 3];
+          linePositions[vertexpos++] = pointPositions[i * 3 + 1];
+          linePositions[vertexpos++] = pointPositions[i * 3 + 2];
+
+          linePositions[vertexpos++] = pointPositions[j * 3];
+          linePositions[vertexpos++] = pointPositions[j * 3 + 1];
+          linePositions[vertexpos++] = pointPositions[j * 3 + 2];
+          numConnected++;
+        }
+      }
     }
 
-    // Flag buffer for WebGL update
-    positions.needsUpdate = true;
+    // Flag buffers for WebGL update
+    pointsRef.current.geometry.attributes.position.needsUpdate = true;
     
-    // Very slowly rotate the entire landscape for a cinematic feel
-    meshRef.current.rotation.y = Math.sin(time * 0.1) * 0.2;
+    linesRef.current.geometry.setDrawRange(0, numConnected * 2);
+    linesRef.current.geometry.attributes.position.needsUpdate = true;
+    
+    // Slowly rotate the entire network
+    pointsRef.current.rotation.y += 0.002;
+    linesRef.current.rotation.y += 0.002;
   });
 
   return (
     <>
       <EffectComposer>
-        <Bloom luminanceThreshold={0.2} mipmapBlur intensity={2.0} />
+        <Bloom luminanceThreshold={0.1} mipmapBlur intensity={1.5} />
       </EffectComposer>
 
-      {/* Position it slightly lower so the text floats above it */}
-      <group position={[0, -3, 0]}>
-        <mesh ref={meshRef} geometry={geometry}>
-          <meshBasicMaterial 
-            color="#C8A96E" // Clinical Gold
-            wireframe={true} 
-            transparent={true}
-            opacity={0.15}
-          />
-        </mesh>
+      <group>
+        <points ref={pointsRef}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={particleCount} array={positions} itemSize={3} />
+          </bufferGeometry>
+          <pointsMaterial size={0.08} color="#00D4FF" transparent opacity={0.8} />
+        </points>
+
+        <lineSegments ref={linesRef}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={linePositions.length / 3} array={linePositions} itemSize={3} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#00D4FF" transparent opacity={0.15} blending={THREE.AdditiveBlending} />
+        </lineSegments>
       </group>
     </>
   );
