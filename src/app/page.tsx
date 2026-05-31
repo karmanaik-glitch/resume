@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 // ══════════════ 1. ULTRA-SMOOTH ANIMATION VARIANTS ══════════════
-// Upgraded easing curve for a much smoother, luxurious fade-in effect
-const smoothEase = [0.22, 1, 0.36, 1];
+// Using a built-in Framer Motion string to completely bypass TypeScript array errors
+const smoothEase = "easeOut";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
@@ -201,14 +201,14 @@ export default function Home() {
             <button key={idx} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} onClick={() => setActivePhase(idx)} className={`relative flex flex-col gap-1 pb-5 pr-8 text-left transition-colors ${activePhase === idx ? 'text-[#E8EEF7]' : 'text-white/30 hover:text-white/70'}`}>
               <span className={`font-mono text-[9px] tracking-[0.12em] uppercase ${activePhase === idx ? 'text-[#C8A96E]' : 'text-white/20'}`}>{phase}</span>
               <span className="font-serif text-lg">{experiences[idx].org.split(',')[0]}</span>
-              {activePhase === idx && <motion.div layoutId="activeTab" transition={{ duration: 0.5, ease: smoothEase }} className="absolute bottom-[-1px] left-0 right-8 h-px bg-[#C8A96E]" />}
+              {activePhase === idx && <motion.div layoutId="activeTab" transition={{ duration: 0.5, ease: "easeOut" }} className="absolute bottom-[-1px] left-0 right-8 h-px bg-[#C8A96E]" />}
             </button>
           ))}
         </div>
 
         <div className="min-h-[300px]">
           <AnimatePresence mode="wait">
-            <motion.div key={activePhase} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.4, ease: smoothEase }} className="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-12 items-start">
+            <motion.div key={activePhase} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.4, ease: "easeOut" }} className="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-12 items-start">
               <div>
                 <h3 className="font-serif text-[40px] font-light text-[#E8EEF7] leading-[1.1] mb-2">{experiences[activePhase].title}</h3>
                 <div className="font-mono text-[11px] tracking-[0.1em] uppercase text-[#00D4FF] mb-1.5">{experiences[activePhase].org}</div>
@@ -291,7 +291,7 @@ export default function Home() {
                 <div key={i} className="flex items-center gap-3.5">
                   <span className="font-mono text-[10px] tracking-[0.06em] text-white/20 w-11">{yr.label}</span>
                   <div className="flex-1 h-0.5 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} whileInView={{ width: `${yr.pct}%` }} viewport={{ once: true }} transition={{ duration: 1.5, ease: smoothEase }} className="h-full bg-gradient-to-r from-[#8C7040] to-[#C8A96E]" />
+                    <motion.div initial={{ width: 0 }} whileInView={{ width: `${yr.pct}%` }} viewport={{ once: true }} transition={{ duration: 1.5, ease: "easeOut" }} className="h-full bg-gradient-to-r from-[#8C7040] to-[#C8A96E]" />
                   </div>
                   <span className="font-mono text-[11px] text-[#C8A96E] w-12 text-right">{yr.pct}%</span>
                 </div>
