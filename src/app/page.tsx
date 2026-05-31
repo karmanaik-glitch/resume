@@ -1,12 +1,9 @@
-//
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { Canvas } from '@react-three/fiber';
-import DataMolecule from '@/components/DataMolecule';
 
-// ══════════════ ANIMATION VARIANTS (STRICT TYPESCRIPT) ══════════════
+// ══════════════ 1. ANIMATION VARIANTS (STRICT TYPESCRIPT) ══════════════
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
@@ -17,13 +14,43 @@ const staggerContainer: Variants = {
   visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 
-// ══════════════ MAIN PAGE COMPONENT ══════════════
+// ══════════════ 2. MOVING BACKGROUND GRADIENT ══════════════
+const MovingGradient = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+      {/* Cyan Blob */}
+      <motion.div
+        animate={{
+          x: [0, 50, 0, -50, 0],
+          y: [0, 30, -30, 0, 0],
+          scale: [1, 1.1, 0.9, 1],
+        }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -top-[20%] right-[10%] w-[40vw] h-[40vw] rounded-full bg-[#00D4FF] opacity-[0.07]"
+        style={{ filter: 'blur(120px)' }}
+      />
+      
+      {/* Gold Blob */}
+      <motion.div
+        animate={{
+          x: [0, -60, 0, 40, 0],
+          y: [0, -40, 40, 0, 0],
+          scale: [1, 1.2, 0.8, 1],
+        }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[40%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-[#C8A96E] opacity-[0.05]"
+        style={{ filter: 'blur(140px)' }}
+      />
+    </div>
+  );
+};
+
+// ══════════════ 3. MAIN PAGE COMPONENT ══════════════
 export default function Home() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
   const [activePhase, setActivePhase] = useState(0);
 
-  // Custom cursor tracking
   useEffect(() => {
     const updateMouse = (e: MouseEvent) => setMousePosition({ x: e.clientX, y: e.clientY });
     window.addEventListener('mousemove', updateMouse);
@@ -67,21 +94,14 @@ export default function Home() {
         ))}
       </nav>
 
-      {/* ════ 1. HERO SECTION WITH SUBTLE 3D MOLECULE ════ */}
+      {/* ════ HERO SECTION WITH MOVING GRADIENT ════ */}
       <section id="home" className="relative min-h-screen flex items-center px-6 md:px-[8vw] overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(0,212,255,0.03)_0%,_transparent_60%)] pointer-events-none" />
         
-        {/* Seamless 3D Background - No partitions, fully transparent background */}
-        <div className="absolute top-0 right-0 w-full md:w-1/2 h-full z-0 opacity-80 pointer-events-none md:pointer-events-auto">
-          <Canvas camera={{ position: [0, 0, 7], fov: 45 }} gl={{ alpha: true, antialias: true }}>
-            <DataMolecule />
-          </Canvas>
-        </div>
+        {/* Soft Animated Background */}
+        <MovingGradient />
         
         <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 md:grid-cols-2">
           <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="col-start-1">
-            
             <motion.div variants={fadeUp} className="flex items-center gap-3 mb-6">
               <div className="w-8 h-px bg-[#C8A96E]" />
               <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-[#C8A96E]">Pharm.D · CDM · Healthcare AI</span>
@@ -112,7 +132,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════ 2. SKILLS BENTO GRID ════ */}
+      {/* ════ SKILLS BENTO GRID ════ */}
       <section id="skills" className="px-6 md:px-[8vw] py-[120px] bg-[#060810] relative z-10 w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">01</span>
@@ -153,7 +173,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════ 3. EXPERIENCE TABS ════ */}
+      {/* ════ EXPERIENCE TABS ════ */}
       <section id="experience" className="px-6 md:px-[8vw] py-[120px] bg-[#0B0D18] w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">02</span>
@@ -197,7 +217,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════ 4. PROJECTS GRID ════ */}
+      {/* ════ PROJECTS GRID ════ */}
       <section id="projects" className="px-6 md:px-[8vw] py-[120px] bg-[#03040A] w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">03</span>
@@ -214,7 +234,6 @@ export default function Home() {
             <motion.a key={idx} href="#" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group block relative bg-[#161927] border border-white/5 rounded p-8 hover:border-white/10 hover:-translate-y-2 transition-all duration-500">
               <div className="font-serif text-[80px] font-light leading-none mb-5 text-white/5 transition-opacity group-hover:text-white/10">{proj.num}</div>
               
-              {/* Safe inline styles to prevent Tailwind compilation bugs */}
               <div 
                 className="font-mono text-[9px] tracking-[0.12em] uppercase px-2.5 py-1 rounded-sm border inline-block mb-5"
                 style={{ color: proj.color, borderColor: `${proj.color}40`, backgroundColor: `${proj.color}0D` }}
