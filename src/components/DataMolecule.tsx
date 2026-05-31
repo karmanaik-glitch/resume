@@ -2,45 +2,61 @@
 
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { MeshDistortMaterial, Float } from '@react-three/drei';
+import { Float } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 export default function DataMolecule() {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const coreRef = useRef<THREE.Mesh>(null);
 
-  // Slowly rotate the entire liquid shape
   useFrame((state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.1;
-      meshRef.current.rotation.z += delta * 0.05;
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.15;
+      groupRef.current.rotation.x += delta * 0.1;
+    }
+    // Make the inner core pulse
+    if (coreRef.current) {
+      const scale = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.1;
+      coreRef.current.scale.set(scale, scale, scale);
     }
   });
 
   return (
     <>
       <EffectComposer>
-        <Bloom luminanceThreshold={0.5} mipmapBlur intensity={1.2} />
+        <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} />
       </EffectComposer>
 
-      {/* Float makes it gently bob up and down like it's in zero-gravity */}
-      <Float speed={1.5} rotationIntensity={1} floatIntensity={2}>
-        <mesh ref={meshRef} scale={1.8}>
-          {/* A complex interlocking torus knot shape */}
-          <torusKnotGeometry args={[1, 0.3, 128, 32]} />
+      <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
+        <group ref={groupRef} scale={1.5}>
           
-          {/* The magic: A shader that warps the geometry like liquid */}
-          <MeshDistortMaterial
-            color="#161927"           // Matches your surface color
-            emissive="#00D4FF"        // Clinical Cyan glow
-            emissiveIntensity={0.2}
-            distort={0.4}             // How much it morphs
-            speed={2}                 // Speed of the morphing
-            roughness={0.2}           // Makes it look shiny/wet
-            metalness={0.8}
-            wireframe={true}          // Keeps it tech-focused rather than a solid blob
-          />
-        </mesh>
+          {/* INNER GLOWING CORE (The Data) */}
+          <mesh ref={coreRef}>
+            <octahedronGeometry args={[1, 0]} />
+            <meshStandardMaterial 
+              color="#C8A96E" // Clinical Gold
+              emissive="#C8A96E"
+              emissiveIntensity={2} 
+              wireframe 
+            />
+          </mesh>
+
+          {/* OUTER FROSTED GLASS SHELL (The Structure) */}
+          <mesh scale={1.8}>
+            <icosahedronGeometry args={[1, 1]} />
+            <meshPhysicalMaterial 
+              color="#ffffff"
+              transmission={0.9}     // Makes it glass-like
+              opacity={1}
+              metalness={0.1}
+              roughness={0.3}        // Gives it a 'frosted' look
+              ior={1.5}              // Index of Refraction (bends light)
+              thickness={0.5}        // Volume of the glass
+            />
+          </mesh>
+
+        </group>
       </Float>
     </>
   );
