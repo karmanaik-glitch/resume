@@ -1,66 +1,78 @@
-'use client';
-
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Canvas } from '@react-three/fiber';
-import DataMolecule from '../components/DataMolecule';
-import BentoGrid from '../components/BentoGrid';
-import ProjectsGrid from '../components/ProjectsGrid';
-import EducationTimeline from '../components/EducationTimeline';
-import ContactFooter from '../components/ContactFooter';
-export default function PremiumResume() {
+
+export default function Home() {
   return (
-    <main className="relative min-h-screen w-full bg-void font-sans text-ice">
+    // Pure dark background with custom selection colors
+    <main className="bg-[#0a0a0a] text-white min-h-screen selection:bg-[#00D4FF] selection:text-black">
       
-      {/* 3D CANVAS LAYER */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-clinicalCyan/5 to-void z-0"></div>
-        <div className="absolute top-0 right-0 w-full md:w-1/2 h-full z-10">
-          <Canvas camera={{ position: [0, 0, 8], fov: 45 }} gl={{ alpha: true, antialias: true }} style={{ background: 'transparent' }}>
-            <ambientLight intensity={0.1} />
-            <DataMolecule />
-          </Canvas>
-        </div>
-      </div>
-
-      {/* FOREGROUND CONTENT LAYER */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 py-24 pointer-events-none">
+      {/* 1. MINIMALIST HERO SECTION */}
+      <section className="min-h-[85vh] flex flex-col justify-center px-6 md:px-20 max-w-6xl mx-auto">
+        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white mb-6">
+          Your Name Here
+        </h1>
+        <h2 className="text-2xl md:text-4xl text-gray-400 font-light max-w-3xl leading-snug">
+          Bridging the gap between <span className="text-[#00D4FF]">clinical pharmacy</span> and robust <span className="text-[#C8A96E]">data engineering</span>.
+        </h2>
         
-        {/* HERO SECTION */}
-        <section className="min-h-[80vh] flex flex-col justify-center w-full md:w-1/2 pointer-events-auto">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-px w-8 bg-clinicalGold"></div>
-              <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-clinicalGold">Pharm.D · CDM · Healthcare AI</span>
-            </div>
-            
-            <h1 className="text-6xl md:text-8xl font-serif font-light tracking-tight mb-4">
-              Karma <span className="italic text-transparent bg-clip-text bg-gradient-to-br from-clinicalCyan to-blue-400">Naik</span>
-            </h1>
-            
-            <p className="font-mono text-xs tracking-widest uppercase text-iceDim mb-8">Clinical Data Management & Healthcare Intelligence</p>
-            <p className="max-w-xl text-iceDim leading-relaxed text-sm md:text-base mb-10">Bridging pharmaceutical expertise with data architecture — transforming patient-level clinical observations into rigorous, trial-ready insights.</p>
-
-            <div className="flex gap-6">
-              <button onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 bg-clinicalCyan text-void font-mono text-xs tracking-widest uppercase hover:bg-white transition-colors duration-300">
-                View Projects
-              </button>
-              <button onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 border border-white/10 text-ice font-mono text-xs tracking-widest uppercase hover:border-white/30 transition-colors duration-300">
-                Get in Touch
-              </button>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* COMPONENT STACK */}
-        <div className="pointer-events-auto mt-24 flex flex-col gap-12">
-          <BentoGrid />
-          <ProjectsGrid />
-          <EducationTimeline />
-          <ContactFooter />
+        <div className="mt-12 flex gap-4">
+          <a href="#experience" className="px-8 py-3 bg-white text-black font-medium rounded-full hover:bg-gray-200 transition-colors">
+            View Experience
+          </a>
+          <a href="mailto:your.email@example.com" className="px-8 py-3 border border-gray-700 text-white font-medium rounded-full hover:border-gray-500 transition-colors">
+            Get in Touch
+          </a>
         </div>
+      </section>
 
-      </div>
+      {/* 2. EXPERIENCE SECTION */}
+      <section id="experience" className="px-6 md:px-20 py-24 max-w-6xl mx-auto border-t border-gray-900">
+        <h3 className="text-sm tracking-[0.3em] text-gray-500 uppercase mb-16">
+          Professional Experience
+        </h3>
+        
+        <div className="space-y-20">
+          {/* Role 1 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-12 hover:group">
+            <div className="md:col-span-1 text-gray-500 text-sm mt-1">
+              2024 — Present
+            </div>
+            <div className="md:col-span-3">
+              <h4 className="text-2xl text-white font-medium mb-1">Clinical Data Manager</h4>
+              <p className="text-[#00D4FF] text-sm tracking-wide mb-4">CURRENT COMPANY INC.</p>
+              <p className="text-gray-400 leading-relaxed max-w-2xl">
+                Engineered and maintained robust data pipelines for Phase II/III clinical trials. Reconciled complex datasets to ensure pristine data integrity and strict regulatory compliance across multiple international sites.
+              </p>
+            </div>
+          </div>
+
+          {/* Role 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-12">
+            <div className="md:col-span-1 text-gray-500 text-sm mt-1">
+              2021 — 2024
+            </div>
+            <div className="md:col-span-3">
+              <h4 className="text-2xl text-white font-medium mb-1">Data Analyst</h4>
+              <p className="text-[#C8A96E] text-sm tracking-wide mb-4">PREVIOUS COMPANY LLC</p>
+              <p className="text-gray-400 leading-relaxed max-w-2xl">
+                Developed custom analytics dashboards and automated reporting workflows, reducing manual data processing time by 40% while improving overall accuracy in cross-functional reporting.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. FOOTER */}
+      <footer className="px-6 md:px-20 py-12 border-t border-gray-900 mt-12">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} Your Name. All rights reserved.</p>
+          <div className="flex space-x-8 mt-6 md:mt-0">
+            <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
+            <a href="#" className="hover:text-white transition-colors">GitHub</a>
+            <a href="#" className="hover:text-white transition-colors">Resume</a>
+          </div>
+        </div>
+      </footer>
+
     </main>
   );
 }
