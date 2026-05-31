@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 // ══════════════ 1. ULTRA-SMOOTH ANIMATION VARIANTS ══════════════
-// Using a built-in Framer Motion string to completely bypass TypeScript array errors
-const smoothEase = "easeOut";
-
+// Using spring physics for a premium, buttery-smooth float effect
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 1.2, ease: smoothEase } }
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { type: "spring", stiffness: 40, damping: 15, mass: 1 } 
+  }
 };
 
 const staggerContainer: Variants = {
@@ -201,14 +203,14 @@ export default function Home() {
             <button key={idx} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} onClick={() => setActivePhase(idx)} className={`relative flex flex-col gap-1 pb-5 pr-8 text-left transition-colors ${activePhase === idx ? 'text-[#E8EEF7]' : 'text-white/30 hover:text-white/70'}`}>
               <span className={`font-mono text-[9px] tracking-[0.12em] uppercase ${activePhase === idx ? 'text-[#C8A96E]' : 'text-white/20'}`}>{phase}</span>
               <span className="font-serif text-lg">{experiences[idx].org.split(',')[0]}</span>
-              {activePhase === idx && <motion.div layoutId="activeTab" transition={{ duration: 0.5, ease: "easeOut" }} className="absolute bottom-[-1px] left-0 right-8 h-px bg-[#C8A96E]" />}
+              {activePhase === idx && <motion.div layoutId="activeTab" transition={{ type: "spring", stiffness: 50, damping: 15 }} className="absolute bottom-[-1px] left-0 right-8 h-px bg-[#C8A96E]" />}
             </button>
           ))}
         </div>
 
         <div className="min-h-[300px]">
           <AnimatePresence mode="wait">
-            <motion.div key={activePhase} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.4, ease: "easeOut" }} className="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-12 items-start">
+            <motion.div key={activePhase} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-12 items-start">
               <div>
                 <h3 className="font-serif text-[40px] font-light text-[#E8EEF7] leading-[1.1] mb-2">{experiences[activePhase].title}</h3>
                 <div className="font-mono text-[11px] tracking-[0.1em] uppercase text-[#00D4FF] mb-1.5">{experiences[activePhase].org}</div>
@@ -232,7 +234,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════ PROJECTS GRID ════ */}
+      {/* ════ PROJECTS GRID (RESTORED WITH LINKS) ════ */}
       <section id="projects" className="px-6 md:px-[8vw] py-[100px] relative z-10 w-full">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="grid grid-cols-[auto_1fr] gap-x-6 items-end mb-[72px]">
           <span className="font-mono text-[10px] tracking-[0.14em] text-[#C8A96E] pb-1 col-start-1 row-start-1">03</span>
@@ -240,20 +242,30 @@ export default function Home() {
           <div className="h-px bg-gradient-to-r from-[#C8A96E]/40 to-transparent mt-2 col-start-2 row-start-2" />
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             { 
-              num: "01", badge: "Python · Machine Learning", title: "Diabetes Risk Predictor", color: "#00D4FF", 
-              desc: "Built a machine learning model using Python (Pandas, NumPy, Matplotlib) and a Kaggle dataset to predict diabetes risk, demonstrating applied knowledge of data preprocessing and model building.",
-              tags: ["Pandas", "NumPy", "Predictive ML"] 
+              num: "01", badge: "CDM · Risk Analytics", title: "RBQM Dashboard", color: "#00D4FF", 
+              desc: "A Risk-Based Quality Management tool for clinical trial monitoring. Surfaces site-level risk signals, tracks Key Risk Indicators, and enables data-driven oversight.",
+              tags: ["Risk Indicators", "Site Monitoring", "KRI Tracking"], link: "https://rbqm.vercel.app/" 
             },
             { 
-              num: "02", badge: "CDM · Standards", title: "CDM Fundamentals Setup", color: "#C8A96E", 
-              desc: "Completed extensive framework studies on Clinical Data Management fundamentals, mastering theoretical application of industry-standard clinical data architectures.",
-              tags: ["CDISC", "CDASH", "SDTM", "ADaM"] 
+              num: "02", badge: "Simulation · EdTech", title: "Clinical Simulator", color: "#00E5A0", 
+              desc: "An interactive training platform for clinical pharmacy scenarios — prescription review, drug interaction detection, and pharmaceutical care decision-making.",
+              tags: ["Rx Review", "Patient Scenarios", "Pharma Training"], link: "https://clinical-pharmacy-simulator.vercel.app/" 
+            },
+            { 
+              num: "03", badge: "AI · Healthcare", title: "PharmAI", color: "#C8A96E", 
+              desc: "An AI-powered pharmaceutical intelligence tool at the intersection of healthcare data and machine learning — demonstrating applied data preprocessing and model building.",
+              tags: ["Machine Learning", "Python · Pandas", "Clinical AI"], link: "https://karmanaik-glitch.github.io/test/" 
             }
           ].map((proj, idx) => (
-            <motion.a key={idx} href="#" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="group block relative bg-[#07090E]/80 backdrop-blur-md border border-white/5 rounded p-8 hover:border-white/10 hover:-translate-y-2 transition-all duration-500">
+            <motion.a 
+              key={idx} href={proj.link} target="_blank" rel="noopener noreferrer" 
+              initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} 
+              onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} 
+              className="group block relative bg-[#07090E]/80 backdrop-blur-md border border-white/5 rounded p-8 hover:border-white/10 hover:-translate-y-2 transition-all duration-500"
+            >
               <div className="font-serif text-[80px] font-light leading-none mb-5 text-white/5 transition-opacity group-hover:text-white/10">{proj.num}</div>
               
               <div className="font-mono text-[9px] tracking-[0.12em] uppercase px-2.5 py-1 rounded-sm border inline-block mb-5" style={{ color: proj.color, borderColor: `${proj.color}40`, backgroundColor: `${proj.color}0D` }}>
@@ -265,6 +277,10 @@ export default function Home() {
               
               <div className="flex flex-wrap gap-1.5 mb-7">
                 {proj.tags.map(tag => <span key={tag} className="font-mono text-[9px] tracking-[0.05em] text-white/20 border border-white/5 px-2 py-1 rounded-sm">{tag}</span>)}
+              </div>
+              <div className="flex items-center justify-between pt-5 border-t border-white/5">
+                <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-white/50 group-hover:text-[#00D4FF] transition-colors">View Live Project</span>
+                <span className="text-white/20 group-hover:text-[#00D4FF] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all">↗</span>
               </div>
             </motion.a>
           ))}
@@ -291,7 +307,7 @@ export default function Home() {
                 <div key={i} className="flex items-center gap-3.5">
                   <span className="font-mono text-[10px] tracking-[0.06em] text-white/20 w-11">{yr.label}</span>
                   <div className="flex-1 h-0.5 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} whileInView={{ width: `${yr.pct}%` }} viewport={{ once: true }} transition={{ duration: 1.5, ease: "easeOut" }} className="h-full bg-gradient-to-r from-[#8C7040] to-[#C8A96E]" />
+                    <motion.div initial={{ width: 0 }} whileInView={{ width: `${yr.pct}%` }} viewport={{ once: true }} transition={{ duration: 1.5, type: "spring" }} className="h-full bg-gradient-to-r from-[#8C7040] to-[#C8A96E]" />
                   </div>
                   <span className="font-mono text-[11px] text-[#C8A96E] w-12 text-right">{yr.pct}%</span>
                 </div>
@@ -397,13 +413,33 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════ FOOTER ════ */}
+      {/* ════ FOOTER WITH ICONS ════ */}
       <footer id="contact" className="px-6 md:px-[8vw] py-[120px] relative z-10 flex flex-col items-center text-center border-t border-white/5">
-        <h2 className="font-serif text-5xl md:text-[88px] font-light text-[#E8EEF7] leading-[1.05] tracking-tight mb-5">Let's build something<br/><em className="italic text-[#00D4FF]">meaningful.</em></h2>
-        <div className="flex gap-4 mt-8">
-          <a href="mailto:karmnaik@gmail.com" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="font-mono text-[10px] tracking-[0.1em] uppercase text-white/50 border border-white/10 px-6 py-3.5 rounded-sm hover:text-white hover:bg-white/5 transition-all backdrop-blur-md">Email</a>
-          <a href="tel:+919099638123" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="font-mono text-[10px] tracking-[0.1em] uppercase text-white/50 border border-white/10 px-6 py-3.5 rounded-sm hover:text-white hover:bg-white/5 transition-all backdrop-blur-md">+91 9099638123</a>
-        </div>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="flex flex-col items-center">
+          <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-[#C8A96E] mb-5">Available for opportunities</div>
+          <h2 className="font-serif text-5xl md:text-[88px] font-light text-[#E8EEF7] leading-[1.05] tracking-tight mb-8">Let's build something<br/><em className="italic text-[#00D4FF]">meaningful.</em></h2>
+          
+          <div className="flex flex-wrap justify-center gap-4 mt-8">
+            <a href="mailto:karmnaik@gmail.com" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="flex items-center gap-2.5 font-mono text-[10px] tracking-[0.1em] uppercase text-white/50 border border-white/10 px-6 py-4 rounded-sm hover:text-white hover:border-white/30 hover:bg-white/5 transition-all backdrop-blur-md">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              karmnaik@gmail.com
+            </a>
+            
+            <a href="tel:+919099638123" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="flex items-center gap-2.5 font-mono text-[10px] tracking-[0.1em] uppercase text-white/50 border border-white/10 px-6 py-4 rounded-sm hover:text-white hover:border-white/30 hover:bg-white/5 transition-all backdrop-blur-md">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.07 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21 16.92z"/></svg>
+              +91 9099638123
+            </a>
+            
+            <a href="https://linkedin.com/in/karma-naik" target="_blank" rel="noopener noreferrer" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} className="flex items-center gap-2.5 font-mono text-[10px] tracking-[0.1em] uppercase text-white/50 border border-white/10 px-6 py-4 rounded-sm hover:text-white hover:border-white/30 hover:bg-white/5 transition-all backdrop-blur-md">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+              LinkedIn
+            </a>
+          </div>
+          
+          <div className="mt-24 font-mono text-[10px] tracking-[0.08em] text-white/20">
+            © 2026 Karma Naik · Pharm.D (Student) · Ahmedabad, Gujarat
+          </div>
+        </motion.div>
       </footer>
     </main>
   );
