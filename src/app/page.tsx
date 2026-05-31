@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 // ══════════════ 1. ULTRA-SMOOTH ANIMATION VARIANTS ══════════════
-// Using spring physics for a premium, buttery-smooth float effect
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: { 
@@ -82,7 +81,6 @@ export default function Home() {
       <MovingGradient />
       
       <style dangerouslySetInnerHTML={{__html: `
-        /* Strictly remove default cursor everywhere */
         * { cursor: none !important; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #03040A; }
@@ -103,9 +101,11 @@ export default function Home() {
         ))}
       </nav>
 
-      {/* ════ HERO SECTION ════ */}
+      {/* ════ HERO SECTION WITH PHOTO ════ */}
       <section id="home" className="relative min-h-screen flex items-center px-6 md:px-[8vw] overflow-hidden">
-        <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 md:grid-cols-2">
+        <div className="relative z-10 w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
+          
+          {/* Left Column: Text */}
           <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="col-start-1">
             <motion.div variants={fadeUp} className="flex items-center gap-3 mb-6">
               <div className="w-8 h-px bg-[#C8A96E]" />
@@ -134,6 +134,34 @@ export default function Home() {
               </a>
             </motion.div>
           </motion.div>
+
+          {/* Right Column: Premium Photo Container */}
+          <motion.div 
+            initial={{ opacity: 0, filter: 'blur(10px)', x: 40 }}
+            animate={{ opacity: 1, filter: 'blur(0px)', x: 0 }}
+            transition={{ duration: 1.5, type: "spring", bounce: 0.4, delay: 0.3 }}
+            className="hidden md:flex justify-center md:justify-end items-center relative"
+            onMouseEnter={() => setIsHovering(true)} 
+            onMouseLeave={() => setIsHovering(false)}
+          >
+            <div className="relative w-full max-w-[380px] aspect-[4/5] rounded-2xl overflow-hidden border border-white/10 bg-[#05060A]/50 backdrop-blur-md group shadow-2xl">
+              
+              {/* Fade out the bottom of the image to blend into the background */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#03040A] via-transparent to-transparent z-10 opacity-90" />
+              
+              {/* Replace 'profile.jpg' with your actual image name in the public folder */}
+              <img 
+                src="/profile.jpg" 
+                alt="Karma Naik" 
+                className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 ease-out filter grayscale group-hover:grayscale-0"
+              />
+              
+              {/* Technical corner accents */}
+              <div className="absolute top-5 left-5 w-3 h-3 border-t border-l border-[#00D4FF] z-20 opacity-40 transition-opacity group-hover:opacity-100" />
+              <div className="absolute bottom-5 right-5 w-3 h-3 border-b border-r border-[#C8A96E] z-20 opacity-40 transition-opacity group-hover:opacity-100" />
+            </div>
+          </motion.div>
+
         </div>
       </section>
 
