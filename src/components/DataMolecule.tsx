@@ -1,99 +1,101 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import { Text, MeshTransmissionMaterial, Float, Environment } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import { Text3D, Center, Float, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 
 export default function DataMolecule() {
-  const lensRef = useRef<THREE.Mesh>(null);
   const groupRef = useRef<THREE.Group>(null);
-  const { viewport } = useThree();
+  const currentScroll = useRef(0);
 
   useFrame((state, delta) => {
-    if (!lensRef.current || !groupRef.current) return;
+    if (!groupRef.current) return;
 
-    // 1. KINETIC MOUSE OPTICS: The glass lens smoothly follows your cursor
-    // We map the mouse coordinates to the viewport width/height
-    const targetX = (state.pointer.x * viewport.width) / 4;
-    const targetY = (state.pointer.y * viewport.height) / 4;
+    // 1. KINETIC MOUSE TRACKING: The entire text group tilts toward your cursor
+    const targetRotationX = (state.pointer.y * Math.PI) / 8; // Tilt up/down
+    const targetRotationY = (state.pointer.x * Math.PI) / 6; // Tilt left/right
 
-    lensRef.current.position.x = THREE.MathUtils.lerp(lensRef.current.position.x, targetX, delta * 4);
-    lensRef.current.position.y = THREE.MathUtils.lerp(lensRef.current.position.y, targetY, delta * 4);
+    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -targetRotationX, delta * 3);
+    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotationY, delta * 3);
 
-    // Slowly rotate the lens to catch reflections
-    lensRef.current.rotation.x += delta * 0.15;
-    lensRef.current.rotation.y += delta * 0.2;
-
-    // 2. SCROLL PARALLAX: The entire scene shifts dynamically as the user scrolls
+    // 2. SCROLL PARALLAX: The text moves upward as you scroll down
     const scrollY = window.scrollY;
     const maxScroll = Math.max(document.body.scrollHeight - window.innerHeight, 1);
     const scrollPercent = scrollY / maxScroll;
 
-    // Move the typography and lens based on scroll depth
-    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, scrollPercent * 10, delta * 3);
+    currentScroll.current = THREE.MathUtils.lerp(currentScroll.current, scrollPercent, delta * 5);
+    groupRef.current.position.y = currentScroll.current * 8;
   });
+
+  // We use a reliable CDN for the 3D font JSON so it works instantly without downloading files
+  const fontUrl = "https://cdn.jsdelivr.net/npm/three/examples/fonts/helvetiker_bold.typeface.json";
 
   return (
     <>
-      {/* Invisible studio lighting to create reflections on the glass */}
       <Environment preset="city" />
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 10]} intensity={2} />
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[5, 10, 5]} intensity={1.5} />
+      <directionalLight position={[-5, -10, -5]} intensity={0.5} color="#00D4FF" />
 
       <group ref={groupRef}>
-        
-        {/* BACKGROUND TYPOGRAPHY */}
-        {/* Placed far back in the Z-axis (-6) so the lens can float in front of it */}
-        <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5}>
-          <Text
-            position={[0, 1.5, -6]}
-            fontSize={3.5}
-            color="#00D4FF" // Clinical Cyan
-            anchorX="center"
-            anchorY="middle"
-            font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyeMZhrib2Bg-4.ttf"
-            fontWeight="bold"
-            letterSpacing={-0.05}
-          >
-            CLINICAL
-          </Text>
-          <Text
-            position={[0, -2, -6]}
-            fontSize={3.5}
-            color="#C8A96E" // Clinical Gold
-            anchorX="center"
-            anchorY="middle"
-            font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyeMZhrib2Bg-4.ttf"
-            fontWeight="bold"
-            letterSpacing={-0.05}
-          >
-            DATA
-          </Text>
+        <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
+          <Center>
+            <group position={[0, 1, 0]}>
+              {/* TOP WORD: CLINICAL */}
+              <Text3D 
+                font={fontUrl}
+                size={1.2}
+                height={0.4} // Extrusion depth (makes it 3D)
+                curveSegments={12}
+                bevelEnabled
+                bevelThickness={0.02}
+                bevelSize={0.02}
+                bevelOffset={0}
+                bevelSegments={5}
+                position={[-4, 0, 0]} // Offset to center it manually
+              >
+                CLINICAL
+                <meshStandardMaterial 
+                  color="#ffffff" 
+                  metalness={0.8} 
+                  roughness={0.2} 
+                />
+              </Text3D>
+
+              {/* BOTTOM WORD: DATA */}
+              <Text3D 
+                font={fontUrl}
+                size={1.2}
+                height={0.4}
+                curveSegments={12}
+                bevelEnabled
+                bevelThickness={0.02}
+                bevelSize={0.02}
+                bevelOffset={0}
+                bevelSegments={5}
+                position={[-2.2, -1.8, 0]}
+              >
+                DATA
+                <meshStandardMaterial 
+                  color="#C8A96E" // Clinical Gold
+                  metalness={0.8} 
+                  roughness={0.2} 
+                />
+              </Text3D>
+            </group>
+          </Center>
         </Float>
-
-        {/* THE SPATIAL GLASS LENS */}
-        {/* Positioned in front (Z=2) to bend the light of the text behind it */}
-        <mesh ref={lensRef} position={[0, 0, 2]} scale={2.5}>
-          <icosahedronGeometry args={[1, 16]} />
-          
-          <MeshTransmissionMaterial
-            backside={true}         
-            samples={4}             
-            thickness={2.5}         
-            chromaticAberration={0.1} // Rainbow edge dispersion
-            anisotropy={0.3}        
-            distortion={0.3}        // Ripples the surface slightly
-            distortionScale={0.5}
-            temporalDistortion={0.1} 
-            ior={1.4}               // Bends light heavily
-            color="#ffffff"
-            roughness={0.05}        // Highly polished feel
-          />
-        </mesh>
-
       </group>
+
+      {/* A subtle shadow caught beneath the floating text */}
+      <ContactShadows 
+        position={[0, -3.5, 0]} 
+        opacity={0.4} 
+        scale={20} 
+        blur={2} 
+        far={10} 
+      />
     </>
   );
-}
 }
