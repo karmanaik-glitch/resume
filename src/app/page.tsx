@@ -151,7 +151,7 @@ export default function Home() {
               
               {/* Replace 'profile.jpg' with your actual image name in the public folder */}
               <img 
-                src="/profile.jpg" 
+                src="/profile.png" 
                 alt="Karma Naik" 
                 className="w-full h-full object-cover object-center opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 ease-out filter grayscale group-hover:grayscale-0"
               />
