@@ -16,7 +16,7 @@ export default function PremiumResume() {
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-clinicalCyan/5 to-void z-0"></div>
         <div className="absolute top-0 right-0 w-full md:w-1/2 h-full z-10">
-          <Canvas camera={{ position: [0, 2, 8], fov: 45 }} gl={{ alpha: true, antialias: true }} style={{ background: 'transparent' }}>
+          <Canvas camera={{ position: [0, 0, 8], fov: 45 }} gl={{ alpha: true, antialias: true }} style={{ background: 'transparent' }}>
             <ambientLight intensity={0.1} />
             <DataMolecule />
           </Canvas>
