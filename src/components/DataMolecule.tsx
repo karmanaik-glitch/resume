@@ -1,127 +1,102 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import React, { useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { Text, MeshTransmissionMaterial, Float, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 
-// --------------------------------------------------------
-// 1. VERTEX SHADER (Passes coordinates to the fragment shader)
-// --------------------------------------------------------
-const vertexShader = `
-  varying vec3 vPos;
-  
-  void main() {
-    vPos = position;
-    // We create a gentle topographical "wave" so the grid isn't perfectly flat
-    float wave = sin(position.x * 0.5) * cos(position.y * 0.5) * 0.5;
-    vec3 newPos = vec3(position.x, position.y, position.z + wave);
-    
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.0);
-  }
-`;
-
-// --------------------------------------------------------
-// 2. FRAGMENT SHADER (Draws the grid, the scanner, and the fog)
-// --------------------------------------------------------
-const fragmentShader = `
-  varying vec3 vPos;
-  uniform float uTime;
-  uniform float uScroll;
-  
-  void main() {
-    // 1. Move the grid based on time and scroll depth
-    vec2 uv = vPos.xy * 1.5; 
-    uv.y -= uTime * 0.5;      // Constant slow forward movement
-    uv.y -= uScroll * 15.0;   // Moves faster when user scrolls
-    
-    // 2. Mathematical Grid Generation (Thick main grid)
-    vec2 grid = abs(fract(uv - 0.5) - 0.5);
-    vec2 lines = smoothstep(0.03, 0.0, grid);
-    float gridAlpha = max(lines.x, lines.y);
-    
-    // 3. Sub-grid Generation (Fainter, smaller squares inside the main grid)
-    vec2 subUv = uv * 4.0;
-    vec2 subGrid = abs(fract(subUv - 0.5) - 0.5);
-    vec2 subLines = smoothstep(0.03, 0.0, subGrid);
-    float subGridAlpha = max(subLines.x, subLines.y) * 0.15; // Much fainter
-    
-    float totalGrid = max(gridAlpha, subGridAlpha);
-    
-    // 4. The "Scanner Sweep" Effect (A horizontal line moving across the data)
-    float scanner = sin(vPos.y * 0.5 + uTime * 1.5);
-    float scannerLine = smoothstep(0.98, 1.0, scanner);
-    float scannerGlow = smoothstep(0.7, 1.0, scanner) * 0.3;
-    
-    // 5. Colors (Clinical Cyan)
-    vec3 baseColor = vec3(0.0, 0.83, 1.0); 
-    
-    // 6. Depth Fog (Fades the grid into the background so it looks infinite)
-    float distanceToCenter = length(vPos.xy);
-    float depthFade = smoothstep(20.0, 5.0, distanceToCenter);
-    
-    // Combine everything
-    vec3 finalColor = baseColor * totalGrid * 0.5 + baseColor * (scannerLine + scannerGlow);
-    float finalAlpha = (totalGrid * 0.4 + scannerLine + scannerGlow) * depthFade;
-    
-    // Discard completely empty pixels to ensure perfect transparency with the CSS background
-    if (finalAlpha < 0.02) discard;
-    
-    gl_FragColor = vec4(finalColor, finalAlpha);
-  }
-`;
-
-// --------------------------------------------------------
-// 3. REACT COMPONENT
-// --------------------------------------------------------
 export default function DataMolecule() {
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const currentScroll = useRef(0);
-
-  const uniforms = useMemo(() => ({
-    uTime: { value: 0 },
-    uScroll: { value: 0 }
-  }), []);
+  const lensRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const { viewport } = useThree();
 
   useFrame((state, delta) => {
-    if (!materialRef.current) return;
+    if (!lensRef.current || !groupRef.current) return;
 
-    // Update time
-    materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
+    // 1. KINETIC MOUSE OPTICS: The glass lens smoothly follows your cursor
+    // We map the mouse coordinates to the viewport width/height
+    const targetX = (state.pointer.x * viewport.width) / 4;
+    const targetY = (state.pointer.y * viewport.height) / 4;
 
-    // Smooth Scroll Capture
+    lensRef.current.position.x = THREE.MathUtils.lerp(lensRef.current.position.x, targetX, delta * 4);
+    lensRef.current.position.y = THREE.MathUtils.lerp(lensRef.current.position.y, targetY, delta * 4);
+
+    // Slowly rotate the lens to catch reflections
+    lensRef.current.rotation.x += delta * 0.15;
+    lensRef.current.rotation.y += delta * 0.2;
+
+    // 2. SCROLL PARALLAX: The entire scene shifts dynamically as the user scrolls
     const scrollY = window.scrollY;
     const maxScroll = Math.max(document.body.scrollHeight - window.innerHeight, 1);
     const scrollPercent = scrollY / maxScroll;
-    
-    currentScroll.current = THREE.MathUtils.lerp(currentScroll.current, scrollPercent, delta * 5);
 
-    // Send smooth scroll to shader
-    materialRef.current.uniforms.uScroll.value = currentScroll.current;
+    // Move the typography and lens based on scroll depth
+    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, scrollPercent * 10, delta * 3);
   });
 
   return (
     <>
-      <EffectComposer>
-        {/* Subtle bloom gives the grid lines a high-end LED screen feel */}
-        <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.0} />
-      </EffectComposer>
-
-      {/* We use a massive plane geometry (40x40).
-        By rotating it on the X-axis, it lays flat like a floor beneath your content.
+      {/* ENVIRONMENT: Glass needs something to reflect to look real. 
+        This adds invisible studio lighting to the scene. 
       */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, -5]}>
-        <planeGeometry args={[40, 40, 64, 64]} />
-        <shaderMaterial
-          ref={materialRef}
-          vertexShader={vertexShader}
-          fragmentShader={fragmentShader}
-          uniforms={uniforms}
-          transparent={true}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
+      <Environment preset="city" />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10, 10, 10]} intensity={2} />
+
+      <group ref={groupRef}>
+        
+        {/* BACKGROUND TYPOGRAPHY (Option 4) */}
+        {/* Placed far back in the Z-axis (-6) so the lens can float in front of it */}
+        <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5}>
+          <Text
+            position={[0, 1.5, -6]}
+            fontSize={3.5}
+            color="#00D4FF" // Clinical Cyan
+            anchorX="center"
+            anchorY="middle"
+            font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyeMZhrib2Bg-4.ttf"
+            fontWeight="bold"
+            letterSpacing={-0.05}
+          >
+            CLINICAL
+          </Text>
+          <Text
+            position={[0, -2, -6]}
+            fontSize={3.5}
+            color="#C8A96E" // Clinical Gold
+            anchorX="center"
+            anchorY="middle"
+            font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyeMZhrib2Bg-4.ttf"
+            fontWeight="bold"
+            letterSpacing={-0.05}
+          >
+            DATA
+          </Text>
+        </Float>
+
+        {/* THE SPATIAL GLASS LENS (Option 1) */}
+        {/* Positioned in front (Z=2) to bend the light of the text behind it */}
+        <mesh ref={lensRef} position={[0, 0, 2]} scale={2.5}>
+          {/* We use an Icosahedron (geometric sphere) with high detail */}
+          <icosahedronGeometry args={[1, 16]} />
+          
+          {/* THE MAGIC: Real-time physical glass shader */}
+          <MeshTransmissionMaterial
+            backside={true}         // Renders the inside of the glass
+            samples={4}             // Quality of the blur
+            thickness={2.5}         // Volume for the text to bend through
+            chromaticAberration={0.1} // Adds slight rainbow edge dispersion
+            anisotropy={0.3}        // How light scatters
+            distortion={0.3}        // Ripples the surface slightly
+            distortionScale={0.5}
+            temporalDistortion={0.1} // Makes the distortion move over time
+            ior={1.4}               // Index of Refraction (bends light heavily)
+            color="#ffffff"
+            roughness={0.05}        // Gives it a highly polished, expensive feel
+          />
+        </mesh>
+
+      </group>
     </>
   );
 }
